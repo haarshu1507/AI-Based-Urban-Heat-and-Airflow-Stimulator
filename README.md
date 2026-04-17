@@ -1,296 +1,183 @@
-# 🌆 Urban Heat & Airflow Simulator
-# 🌆 Urban Heat & Airflow Simulator
+# Urban Heat & Airflow Simulator
+
+Interactive smart-city simulator to explore how land-use choices influence local heat, airflow, pollution, and sustainability scores.
+
+## Project Snapshot
+
+This app combines a manual city builder with real-world OSM import, live weather integration, AI suggestions, and synchronized multi-view visualization.
+
+Main capabilities:
+
+- edit an urban layout on a grid and compare outcomes before/after
+- import visible map bounds from OpenStreetMap (Overpass) into the same simulation grid
+- run heat and airflow models with weather-aware behavior
+- inspect results in `2D`, `Heatmap`, `Airflow`, `Weather`, `3D`, and `Select` (map import) modes
+- generate AI optimization suggestions with API fallback logic
 
-A **smart-city simulation platform** that allows users to design urban layouts and instantly visualize **heat distribution, airflow patterns, and sustainability metrics**, along with **AI-powered suggestions**.
+## Current Features
 
----
+### 1) City Editing and Views
 
-## 🚀 Project Overview
+- editable grid with land-use tools:
+  - `house`
+  - `skyscraper`
+  - `park`
+  - `forest`
+  - `water`
+  - `road`
+  - `industry`
+  - `empty` (erase)
+- synchronized rendering across:
+  - `2D`
+  - `Heatmap`
+  - `Airflow`
+  - `Weather`
+  - `3D`
+  - `Select` (real-world map mode)
 
-Urban Heat is a browser-based simulation tool where users can:
+### 2) Real-World OSM Import
 
-- 🏙️ Build a custom city using a **2D grid**
-- 🌍 Import real-world areas using **OpenStreetMap**
-- 🌡️ Visualize **urban heat islands**
-- 🌬️ Analyze **airflow and ventilation**
-- 📊 Get **real-time sustainability insights**
-- 🤖 Receive **AI-driven suggestions**
+- Leaflet map with pan/zoom based visible-area import
+- OSM feature extraction using Overpass for:
+  - buildings
+  - landuse (including industrial/construction/green landuse tags)
+  - parks/greenery
+  - water features
+  - roads
+  - worship and hospital POIs
+- adaptive grid sizing based on geographic extent (target meter-sized cells)
+- empty cells rendered clearly (black fill with red cross marker)
+- roads not shown as icon overlays by default
+- hospital POIs rendered with a dedicated hospital icon in map overlay
+- worship features mapped into residential/house zoning in simulation
 
-> Built for **SDG & Social Impact** — focusing on sustainable urban planning.
+### 3) Simulation Engine
 
----
+Heat model:
 
-## 🎯 Problem Statement
+- neighborhood-based influence (`3x3`) over land-use types
+- weather mode impact (`sunny`, `rainy`, `windy`)
+- optional live-weather baseline from OpenWeather
 
-Modern cities face:
+Airflow model:
 
-- 🌡️ Rising temperatures (Urban Heat Islands)
-- 🌬️ Poor airflow → pollution accumulation
-- 🌱 Lack of green spaces
+- wind-direction propagation
+- obstacle-based attenuation by urban form
+- weather-aware airflow adjustments
 
-There is no simple tool to **visualize the impact of city design decisions**.
+### 4) Metrics and Insights
 
-👉 This project solves that with an **interactive simulation platform**.
+Live metrics include:
 
----
+- average temperature
+- greenery percentage
+- building count / urban density
+- heat hotspots
+- pollution index
+- heat intensity
+- sustainability score
 
-## ✨ Features
+### 5) AI Suggestions
 
-### 🏙️ City Builder
-- 15×15 interactive grid
-- Place different elements:
-  - 🏠 House  
-  - 🏢 Skyscraper  
-  - 🌳 Forest  
-  - 🌿 Park  
-  - 💧 Water  
-  - 🛣️ Road  
-  - 🏭 Industry  
+- tries Gemini first
+- falls back to Groq
+- falls back to rule-based suggestions if external AI providers are unavailable
+- suggestion clicks highlight relevant cells in the grid/map
 
----
+### 6) 3D Scene
 
-### 🌡️ Heat Simulation
-- Based on:
-  - Nearby structures (3×3 influence)
-  - Land type contribution
-  - Weather conditions
+- Three.js city rendering of the active grid state
+- consistent with current layout and simulation context
 
-- Visualization:
-  - 🔵 Blue → Cool
-  - 🔴 Red → Hot
+## Tech Stack
 
----
+- `React 19`
+- `Vite 7`
+- `Tailwind CSS 4`
+- `Leaflet`
+- `OpenStreetMap / Overpass`
+- `Three.js`
+- `Lucide React`
+- `Google Gemini API`
+- `Groq API`
+- `OpenWeatherMap API`
 
-### 🌬️ Airflow Simulation
-- Wind direction based
-- Buildings block airflow
-- Visualization:
-  - 🔴 Low airflow
-  - 🟢 High airflow
+## Setup and Run
 
----
+### Prerequisites
 
-### 🌍 Real-World Map Integration
-- Select any location
-- Fetch data from OpenStreetMap
-- Convert into simulation grid
+- Node.js `18+` (recommended: latest LTS)
+- npm (comes with Node.js)
 
----
-
-### 📊 Metrics Dashboard
-
-- 🌡️ Average Heat
-- 🌱 Green Coverage %
-- 🏢 Urban Density
-- 🔥 Heat Hotspots
-- 🌫️ Pollution Index
-- ♻️ Sustainability Score
-
----
-
-### 🤖 AI Suggestions
-- Uses Google Gemini API (optional)
-- Provides:
-  - Planning improvements
-  - Sustainability advice
-
-- Works without API (rule-based fallback)
-
----
-
-### 🧊 3D Visualization
-- Built with Three.js
-- Converts grid into a 3D city
-- Heat shown using color intensity
-
----
-
-## 🧠 How It Works
-
-### Heat Calculation
-- Each cell gets heat from surrounding cells
-- Weather modifies intensity
-- Values normalized for visualization
-
-### Airflow Calculation
-- Wind direction determines flow
-- Buildings act as obstacles
-- Output range: 0–5
-
-### Metrics Calculation
-- Based on heat, airflow, greenery, and buildings
-- Generates sustainability score (0–100)
-
----
-
-## 🛠️ Tech Stack
-
-| Layer | Technology |
-|------|-----------|
-| Frontend | React 19 |
-| Build Tool | Vite 8 |
-| Styling | Tailwind CSS |
-| 3D | Three.js |
-| Maps | Leaflet + OpenStreetMap |
-| AI | Google Gemini API |
-| Icons | Lucide React |
-
-> Fully client-side application (no backend required)
-
-
----
-
-## ⚙️ Installation & Setup
-A **smart-city simulation platform** that allows users to design urban layouts and instantly visualize **heat distribution, airflow patterns, and sustainability metrics**, along with **AI-powered suggestions**.
-
----
-
-## 🚀 Project Overview
-
-Urban Heat is a browser-based simulation tool where users can:
-
-- 🏙️ Build a custom city using a **2D grid**
-- 🌍 Import real-world areas using **OpenStreetMap**
-- 🌡️ Visualize **urban heat islands**
-- 🌬️ Analyze **airflow and ventilation**
-- 📊 Get **real-time sustainability insights**
-- 🤖 Receive **AI-driven suggestions**
-
-> Built for **SDG & Social Impact** — focusing on sustainable urban planning.
-
----
-
-## 🎯 Problem Statement
-
-Modern cities face:
-
-- 🌡️ Rising temperatures (Urban Heat Islands)
-- 🌬️ Poor airflow → pollution accumulation
-- 🌱 Lack of green spaces
-
-There is no simple tool to **visualize the impact of city design decisions**.
-
-👉 This project solves that with an **interactive simulation platform**.
-
----
-
-## ✨ Features
-
-### 🏙️ City Builder
-- 15×15 interactive grid
-- Place different elements:
-  - 🏠 House  
-  - 🏢 Skyscraper  
-  - 🌳 Forest  
-  - 🌿 Park  
-  - 💧 Water  
-  - 🛣️ Road  
-  - 🏭 Industry  
-
----
-
-### 🌡️ Heat Simulation
-- Based on:
-  - Nearby structures (3×3 influence)
-  - Land type contribution
-  - Weather conditions
-
-- Visualization:
-  - 🔵 Blue → Cool
-  - 🔴 Red → Hot
-
----
-
-### 🌬️ Airflow Simulation
-- Wind direction based
-- Buildings block airflow
-- Visualization:
-  - 🔴 Low airflow
-  - 🟢 High airflow
-
----
-
-### 🌍 Real-World Map Integration
-- Select any location
-- Fetch data from OpenStreetMap
-- Convert into simulation grid
-
----
-
-### 📊 Metrics Dashboard
-
-- 🌡️ Average Heat
-- 🌱 Green Coverage %
-- 🏢 Urban Density
-- 🔥 Heat Hotspots
-- 🌫️ Pollution Index
-- ♻️ Sustainability Score
-
----
-
-### 🤖 AI Suggestions
-- Uses Google Gemini API (optional)
-- Provides:
-  - Planning improvements
-  - Sustainability advice
-
-- Works without API (rule-based fallback)
-
----
-
-### 🧊 3D Visualization
-- Built with Three.js
-- Converts grid into a 3D city
-- Heat shown using color intensity
-
----
-
-## 🧠 How It Works
-
-### Heat Calculation
-- Each cell gets heat from surrounding cells
-- Weather modifies intensity
-- Values normalized for visualization
-
-### Airflow Calculation
-- Wind direction determines flow
-- Buildings act as obstacles
-- Output range: 0–5
-
-### Metrics Calculation
-- Based on heat, airflow, greenery, and buildings
-- Generates sustainability score (0–100)
-
----
-
-## 🛠️ Tech Stack
-
-| Layer | Technology |
-|------|-----------|
-| Frontend | React 19 |
-| Build Tool | Vite 8 |
-| Styling | Tailwind CSS |
-| 3D | Three.js |
-| Maps | Leaflet + OpenStreetMap |
-| AI | Google Gemini API |
-| Icons | Lucide React |
-
-> Fully client-side application (no backend required)
-
-
----
-
-## ⚙️ Installation & Setup
+### 1) Clone and install
 
 ```bash
-# Clone repository
-git clone https://github.com/your-username/urban-heat.git
-
-# Navigate to project
-cd urban-heat
-
-# Install dependencies
+git clone <your-repository-url>
+cd urban-heat-simulator
 npm install
+```
 
-# Run development server
+### 2) Create required API keys
+
+You should create keys for external providers used by this app:
+
+- Gemini key (Google AI Studio): [https://aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey)
+- Groq key: [https://console.groq.com/keys](https://console.groq.com/keys)
+- OpenWeatherMap key: [https://home.openweathermap.org/api_keys](https://home.openweathermap.org/api_keys)
+
+### 3) Create local `.env`
+
+Create a `.env` file in the project root:
+
+```env
+VITE_GEMINI_API_KEY=your_gemini_api_key
+VITE_GROQ_API_KEY=your_groq_api_key
+VITE_OPENWEATHER_API_KEY=your_openweather_api_key
+```
+
+Important notes:
+
+- never commit `.env` to git
+- frontend env vars must be prefixed with `VITE_`
+- app can still run without all keys, but:
+  - no OpenWeather key -> live weather fetch fails and fallback weather behavior is used
+  - no Gemini/Groq keys -> AI suggestions fall back to rule-based logic
+
+### 4) Run the app
+
+```bash
 npm run dev
+```
+
+Open the local URL shown in terminal (typically `http://localhost:3002`).
+
+### 5) Build for production
+
+```bash
+npm run build
+npm run preview
+```
+
+## Scripts
+
+- `npm run dev` - start development server
+- `npm run build` - create production build
+- `npm run preview` - preview production build locally
+
+## Troubleshooting
+
+- OSM import does not load:
+  - zoom in and retry (very large areas can be rate-limited or heavy)
+  - verify internet access to Overpass endpoints
+- Live weather fails:
+  - check `VITE_OPENWEATHER_API_KEY`
+  - confirm API key is active in OpenWeather dashboard
+- AI suggestions unavailable:
+  - verify `VITE_GEMINI_API_KEY` and/or `VITE_GROQ_API_KEY`
+  - if both are missing/invalid, rule-based suggestions are used
+
+## Roadmap (Current Direction)
+
+- improve OSM coverage and mapping fidelity
+- enhance model realism for climate and airflow dynamics
+- expand scoring/analysis capabilities
