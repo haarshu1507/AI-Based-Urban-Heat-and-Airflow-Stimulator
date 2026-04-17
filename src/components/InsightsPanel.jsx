@@ -2,6 +2,7 @@ import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom';
 import { Info } from 'lucide-react';
 import { formatMetricTooltipCalculation } from '../metrics';
+import CarbonPanel from './CarbonPanel';
 
 const SectionHeading = ({ children }) => (
   <h2 className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-[0.15em] mb-4 flex items-center gap-2">
@@ -136,6 +137,9 @@ const InsightsPanel = ({
   aiLoading,
   aiSuggestions,
   onSuggestionClick,
+  carbonData,
+  baselineCO2,
+  onSetCurrentBaseline,
 }) => {
   const gridIsEmpty = useMemo(() => {
     if (!grid?.length) return true;
@@ -383,6 +387,14 @@ const InsightsPanel = ({
             </div>
 
           </div>
+        </section>
+
+        <section>
+          <CarbonPanel
+            carbonData={carbonData}
+            baselineCO2={baselineCO2}
+            onSetCurrentBaseline={onSetCurrentBaseline}
+          />
         </section>
 
         <section>

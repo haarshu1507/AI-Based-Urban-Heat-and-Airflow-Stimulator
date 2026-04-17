@@ -107,7 +107,7 @@ export const generateAISuggestions = (grid, metrics, airflowData) => {
          id: 'airflow-low',
          type: 'airflow',
          icon: '🌬',
-         message: 'Wind flow is severely obstructed. Bulldoze solid blocks to create ventilation corridors.',
+         message: 'Wind flow is severely obstructed. Create a few targeted ventilation corridors while preserving core buildings.',
          severity: 'red'
        });
     }
