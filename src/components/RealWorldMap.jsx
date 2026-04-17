@@ -9,6 +9,8 @@ import {
 } from '../osm/overpass.js';
 import { rasterizeToGrid } from '../osm/rasterize.js';
 
+const EMPTY_MAP_CROSS_HTML = `<div style="display:flex;align-items:center;justify-content:center;width:26px;height:26px;pointer-events:none"><svg viewBox="0 0 24 24" width="22" height="22" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><line x1="4" y1="4" x2="20" y2="20" stroke="#dc2626" stroke-width="3" stroke-linecap="round"/><line x1="20" y1="4" x2="4" y2="20" stroke="#dc2626" stroke-width="3" stroke-linecap="round"/></svg></div>`;
+
 const TYPE_ICONS = {
   empty: null,
   house: '🏠',
@@ -197,8 +199,11 @@ export default function RealWorldMap({
     for (let y = 0; y < rows; y++) {
       for (let x = 0; x < cols; x++) {
         const latlngs = cellBounds(geoBbox, y, x, rows, cols);
+        const t = typeGrid[y][x];
         let fill;
-        if (isAirflowViz && airflowData?.[y]?.[x] !== undefined) {
+        if (t === 'empty') {
+          fill = '#000000';
+        } else if (isAirflowViz && airflowData?.[y]?.[x] !== undefined) {
           fill = airflowFill(airflowData[y][x]);
         } else if (useHeatFill && heatData?.normalizedGrid?.[y]?.[x]) {
           fill = heatFill(heatData.normalizedGrid[y][x].norm);
@@ -219,7 +224,6 @@ export default function RealWorldMap({
           const cell = latLngToCell(lat, lng, geoBbox, rows, cols);
           onCellClick?.(cell.y, cell.x);
         });
-        const t = typeGrid[y][x];
         const hi = heatData?.normalizedGrid?.[y]?.[x];
         const af = airflowData?.[y]?.[x];
         let tipHtml;
@@ -236,15 +240,31 @@ export default function RealWorldMap({
         if (showLandUseIcons && !isHeatmapViz) {
           const iconChar = TYPE_ICONS[t] ?? null;
           const center = cellCenter(geoBbox, y, x, rows, cols);
-          const html = iconChar
-            ? `<div style="display:flex;align-items:center;justify-content:center;font-size:16px;width:24px;height:24px;line-height:1;pointer-events:none">${iconChar}</div>`
-            : `<div style="width:1px;height:1px;pointer-events:none"></div>`;
+          const html =
+            t === 'empty'
+              ? EMPTY_MAP_CROSS_HTML
+              : iconChar
+                ? `<div style="display:flex;align-items:center;justify-content:center;font-size:16px;width:24px;height:24px;line-height:1;pointer-events:none">${iconChar}</div>`
+                : `<div style="width:1px;height:1px;pointer-events:none"></div>`;
           L.marker(center, {
             icon: L.divIcon({
               className: 'uhi-2d-marker',
               html,
-              iconSize: [24, 24],
-              iconAnchor: [12, 12],
+              iconSize: [26, 26],
+              iconAnchor: [13, 13],
+            }),
+            interactive: false,
+          }).addTo(lg);
+        }
+
+        if (t === 'empty' && (isHeatmapViz || isAirflowViz)) {
+          const center = cellCenter(geoBbox, y, x, rows, cols);
+          L.marker(center, {
+            icon: L.divIcon({
+              className: 'uhi-2d-marker',
+              html: EMPTY_MAP_CROSS_HTML,
+              iconSize: [26, 26],
+              iconAnchor: [13, 13],
             }),
             interactive: false,
           }).addTo(lg);

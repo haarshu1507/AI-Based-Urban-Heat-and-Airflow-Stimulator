@@ -9,6 +9,17 @@ import {
   Factory,
 } from 'lucide-react';
 
+const EMPTY_CROSS_SVG = (
+  <svg
+    className="absolute inset-0 h-full w-full pointer-events-none"
+    viewBox="0 0 100 100"
+    aria-hidden
+  >
+    <line x1="14" y1="14" x2="86" y2="86" stroke="#dc2626" strokeWidth="9" strokeLinecap="round" />
+    <line x1="86" y1="14" x2="14" y2="86" stroke="#dc2626" strokeWidth="9" strokeLinecap="round" />
+  </svg>
+);
+
 const TYPE_COLORS = {
   empty: { icon: null },
   house: { icon: '🏠' },
@@ -105,9 +116,11 @@ const GridCanvas = ({
             const isHighlighted = highlightKeys.has(`${rIdx},${cIdx}`);
             let cellStyle = {};
             const typeDef = TYPE_COLORS[cell.type] || TYPE_COLORS.empty;
+            const isEmpty = cell.type === 'empty';
             let cellClass = `
                 cursor-pointer transition-colors duration-300 ease-in-out relative flex items-center justify-center
                 border border-slate-900/20 hover:border-slate-900/60
+                ${isEmpty ? 'overflow-hidden' : ''}
                 ${isHighlighted ? 'pulse-highlight z-[1]' : ''}
             `;
             let tooltip = `Type: ${cell.type}`;
@@ -173,6 +186,11 @@ const GridCanvas = ({
                   {flowStr > 0 ? arrow : (isAirflow ? '❌' : '')}
                 </div>
               );
+            }
+
+            if (isEmpty) {
+              cellStyle = { ...cellStyle, backgroundColor: '#000000' };
+              innerContent = EMPTY_CROSS_SVG;
             }
 
             return (

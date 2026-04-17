@@ -44,7 +44,10 @@ function hslToAirflowColor(flowStr) {
   return new THREE.Color().setHSL(hue, 1, 0.35);
 }
 
-function getTileColor(r, c, viewMode, heatData, airflowData) {
+function getTileColor(r, c, viewMode, heatData, airflowData, grid) {
+  if (grid?.[r]?.[c]?.type === 'empty') {
+    return new THREE.Color(0x000000);
+  }
   if (viewMode === 'airflow' && airflowData?.[r]?.[c] !== undefined) {
     return hslToAirflowColor(airflowData[r][c]);
   }
@@ -434,7 +437,7 @@ const City3D = ({
         const mat = mesh?.material;
         if (!mat) continue;
         if (viewMode === '3D') {
-          const col = getTileColor(r, c, 'heatmap', heatData, airflowData);
+          const col = getTileColor(r, c, 'heatmap', heatData, airflowData, grid);
           const norm = heatData?.normalizedGrid?.[r]?.[c]?.norm ?? 0.5;
           mat.color.copy(col);
           mat.emissive.copy(col);
@@ -445,7 +448,7 @@ const City3D = ({
           mesh.userData.emissiveIntBase = mat.emissiveIntensity;
           continue;
         }
-        const col = getTileColor(r, c, viewMode, heatData, airflowData);
+        const col = getTileColor(r, c, viewMode, heatData, airflowData, grid);
         const glow = getTileGlow(r, c, viewMode, heatData, airflowData);
         mat.color.copy(col);
         mat.emissive.copy(col);
@@ -456,7 +459,7 @@ const City3D = ({
         mesh.userData.emissiveIntBase = mat.emissiveIntensity;
       }
     }
-  }, [viewMode, heatData, airflowData, threeReady, highlightedCells]);
+  }, [viewMode, heatData, airflowData, grid, threeReady, highlightedCells]);
 
   useEffect(() => {
     const group = cityGroupRef.current;

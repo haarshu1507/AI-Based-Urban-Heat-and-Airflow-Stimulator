@@ -5,16 +5,30 @@ const DEFAULT_BBOX = { south: 28.6, west: 77.2, north: 28.65, east: 77.25 };
  */
 export function buildOverpassQuery(bbox = DEFAULT_BBOX) {
   const { south, west, north, east } = bbox;
+  /** Broader coverage: large landcovers + typical road classes (no foot/path to limit noise). */
   return `
 [out:json][timeout:180];
 (
   way["building"](${south},${west},${north},${east});
   way["landuse"="industrial"](${south},${west},${north},${east});
+  way["landuse"="commercial"](${south},${west},${north},${east});
+  way["landuse"="retail"](${south},${west},${north},${east});
+  way["landuse"="residential"](${south},${west},${north},${east});
+  way["landuse"="construction"](${south},${west},${north},${east});
+  way["landuse"="railway"](${south},${west},${north},${east});
+  way["landuse"="meadow"](${south},${west},${north},${east});
   way["leisure"="park"](${south},${west},${north},${east});
+  way["leisure"="garden"](${south},${west},${north},${east});
+  way["leisure"="nature_reserve"](${south},${west},${north},${east});
   way["natural"="water"](${south},${west},${north},${east});
+  way["natural"="wetland"](${south},${west},${north},${east});
   way["natural"="wood"](${south},${west},${north},${east});
+  way["natural"="grassland"](${south},${west},${north},${east});
   way["landuse"="forest"](${south},${west},${north},${east});
-  way["highway"~"primary|secondary|tertiary|residential|unclassified"](${south},${west},${north},${east});
+  way["waterway"="riverbank"](${south},${west},${north},${east});
+  way["waterway"~"river|stream|canal|ditch|drain|tidal_channel|fairway|dock"](${south},${west},${north},${east});
+  way["natural"="bay"](${south},${west},${north},${east});
+  way["highway"~"motorway|trunk|primary|secondary|tertiary|unclassified|residential|living_street|motorway_link|trunk_link|primary_link|secondary_link|tertiary_link"](${south},${west},${north},${east});
 );
 out geom;
 `;
@@ -97,6 +111,18 @@ export async function fetchOverpassJson(query, timeoutMs = 25000) {
   return { elements: [] };
 }
 
+/** Open waterway ways (centerline) — rasterized with a buffer; avoids bogus closed polygons. */
+const LINEAR_WATERWAYS = new Set([
+  'river',
+  'stream',
+  'canal',
+  'ditch',
+  'drain',
+  'tidal_channel',
+  'fairway',
+  'dock',
+]);
+
 export function elementsToFeatures(osmData) {
   const polygons = [];
   const lines = [];
@@ -112,7 +138,13 @@ export function elementsToFeatures(osmData) {
       Math.abs(latlngs[0][1] - last[1]) < 1e-7;
     if (tags.highway && !closed) {
       lines.push({ latlngs, tags, id: el.id });
-    } else {
+      continue;
+    }
+    if (!closed && tags.waterway && LINEAR_WATERWAYS.has(tags.waterway) && latlngs.length >= 2) {
+      lines.push({ latlngs, tags, id: el.id });
+      continue;
+    }
+    {
       let ring = closed ? latlngs.slice(0, -1) : [...latlngs];
       if (!closed && tags.building && ring.length >= 3) {
         ring = [...ring, ring[0]];
