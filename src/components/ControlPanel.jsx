@@ -58,27 +58,45 @@ const SectionHeading = ({ children }) => (
   </h2>
 );
 
+const WEATHER_MODE_LABELS = {
+  sunny: 'Sunny',
+  rainy: 'Rainy',
+  windy: 'Windy',
+};
+
 const ControlPanel = ({ 
   selectedTool, setSelectedTool, 
   viewMode, setViewMode, 
-  weather, setWeather, 
+  weatherMode, setWeatherMode,
+  liveWeather,
+  weatherCity,
+  weatherCityInput,
+  setWeatherCityInput,
+  onWeatherCitySubmit,
+  weatherLoading,
+  weatherError,
+  effectiveWeatherMode,
   windDirection, setWindDirection,
-  grid, heatData, airflowData, onCellClick, highlightedCells,
+  grid, heatData, airflowData, onCellClick,
   onRandomCity, onResetGrid,
   comparisonMode, setComparisonMode, hasPreviousGrid,
   panelWidthPx,
 }) => {
+  const [toolMenuOpen, setToolMenuOpen] = useState(false);
   const [vizMenuOpen, setVizMenuOpen] = useState(false);
+  const toolDropdownRef = useRef(null);
   const vizDropdownRef = useRef(null);
 
   useEffect(() => {
     const onDocMouseDown = (e) => {
+      if (!toolDropdownRef.current?.contains(e.target)) setToolMenuOpen(false);
       if (!vizDropdownRef.current?.contains(e.target)) setVizMenuOpen(false);
     };
     document.addEventListener('mousedown', onDocMouseDown);
     return () => document.removeEventListener('mousedown', onDocMouseDown);
   }, []);
 
+  const activeTool = TOOLS.find((tool) => tool.id === selectedTool) || TOOLS[0];
   const activeView = VIEWS.find((v) => v.id === viewMode) || VIEWS[0];
   const showPanel2dMap =
     viewMode === 'select' ||
@@ -107,19 +125,127 @@ const ControlPanel = ({
           </button>
         </div>
 
+        <section>
+          <SectionHeading>Live Weather</SectionHeading>
+          <form
+            className="space-y-3"
+            onSubmit={(e) => {
+              e.preventDefault();
+              onWeatherCitySubmit?.();
+            }}
+          >
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={weatherCityInput}
+                onChange={(e) => setWeatherCityInput(e.target.value)}
+                placeholder="Enter city"
+                className="min-w-0 flex-1 rounded-xl border border-slate-700/70 bg-slate-950/90 px-3 py-3 text-sm text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-cyan-500/70"
+              />
+              <button
+                type="submit"
+                disabled={weatherLoading}
+                className="rounded-xl border border-cyan-500/40 bg-cyan-700/80 px-4 py-3 text-sm font-semibold text-white transition hover:bg-cyan-600 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {weatherLoading ? 'Loading...' : 'Load'}
+              </button>
+            </div>
+          </form>
+
+          <div className="mt-3 rounded-2xl border border-slate-700/70 bg-slate-950/80 p-4 shadow-inner">
+            <div className="mb-3 flex items-start justify-between gap-3">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-500">City</p>
+                <p className="mt-1 text-sm font-semibold text-slate-100">{weatherCity}</p>
+              </div>
+              <span className="rounded-full border border-slate-700/80 bg-slate-900 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-cyan-300">
+                {WEATHER_MODE_LABELS[effectiveWeatherMode] || effectiveWeatherMode}
+              </span>
+            </div>
+
+            {liveWeather ? (
+              <div className="grid grid-cols-3 gap-2.5">
+                <div className="rounded-xl border border-slate-800 bg-slate-900/80 px-3 py-2.5">
+                  <p className="text-[10px] uppercase tracking-widest text-slate-500">Temp</p>
+                  <p className="mt-1 text-base font-bold text-rose-300">{liveWeather.temperature.toFixed(1)}°C</p>
+                </div>
+                <div className="rounded-xl border border-slate-800 bg-slate-900/80 px-3 py-2.5">
+                  <p className="text-[10px] uppercase tracking-widest text-slate-500">Wind</p>
+                  <p className="mt-1 text-base font-bold text-cyan-300">{liveWeather.windSpeed.toFixed(1)} m/s</p>
+                </div>
+                <div className="rounded-xl border border-slate-800 bg-slate-900/80 px-3 py-2.5">
+                  <p className="text-[10px] uppercase tracking-widest text-slate-500">Humidity</p>
+                  <p className="mt-1 text-base font-bold text-emerald-300">{Math.round(liveWeather.humidity)}%</p>
+                </div>
+              </div>
+            ) : (
+              <p className="rounded-xl border border-amber-500/20 bg-amber-950/20 px-3 py-2.5 text-xs text-amber-200/90">
+                Live weather is unavailable. Simulation is using the fallback weather preset.
+              </p>
+            )}
+
+            {weatherError ? (
+              <p className="mt-3 text-xs text-rose-300">{weatherError}</p>
+            ) : (
+              <p className="mt-3 text-xs text-slate-400">
+                Temperature and wind speed automatically modify heat buildup and airflow.
+              </p>
+            )}
+          </div>
+        </section>
+
         {/* Tools Section */}
         <section>
           <SectionHeading>Construction</SectionHeading>
-          <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5">
-            {TOOLS.map(tool => (
-              <Button
-                key={tool.id}
-                active={selectedTool === tool.id}
-                onClick={() => setSelectedTool(tool.id)}
-                icon={tool.icon}
-                label={tool.label}
+          <div className="relative mb-3" ref={toolDropdownRef}>
+            <button
+              type="button"
+              onClick={() => setToolMenuOpen((o) => !o)}
+              aria-expanded={toolMenuOpen}
+              aria-haspopup="listbox"
+              className="flex w-full items-center justify-between gap-3 rounded-xl border border-slate-600/70 bg-slate-800/80 px-3 py-3 text-left shadow-inner transition hover:border-slate-500 hover:bg-slate-800 active:scale-[0.99]"
+            >
+              <span className="flex min-w-0 items-center gap-2.5 text-sm font-medium text-slate-100">
+                <span className="flex shrink-0 text-cyan-300 [&>svg]:h-[18px] [&>svg]:w-[18px]">
+                  {activeTool.icon}
+                </span>
+                <span className="truncate">{activeTool.label}</span>
+              </span>
+              <ChevronDown
+                size={20}
+                className={`shrink-0 text-slate-400 transition-transform duration-200 ${toolMenuOpen ? 'rotate-180' : ''}`}
+                aria-hidden
               />
-            ))}
+            </button>
+            {toolMenuOpen ? (
+              <ul
+                role="listbox"
+                className="absolute left-0 right-0 top-full z-30 mt-1 max-h-[min(70vh,320px)] overflow-auto rounded-xl border border-slate-600/80 bg-slate-900/95 py-1 shadow-[0_16px_48px_rgba(0,0,0,0.55)] backdrop-blur-md"
+              >
+                {TOOLS.map((tool) => {
+                  const selected = selectedTool === tool.id;
+                  return (
+                    <li key={tool.id} role="option" aria-selected={selected}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedTool(tool.id);
+                          setToolMenuOpen(false);
+                        }}
+                        className={`flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm transition ${
+                          selected
+                            ? 'bg-cyan-600/25 text-cyan-100'
+                            : 'text-slate-300 hover:bg-slate-800/90 hover:text-white'
+                        }`}
+                      >
+                        <span className="flex shrink-0 [&>svg]:h-[18px] [&>svg]:w-[18px]">{tool.icon}</span>
+                        <span className="font-medium">{tool.label}</span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : null}
           </div>
         </section>
 
@@ -190,11 +316,10 @@ const ControlPanel = ({
                   heatData={heatData}
                   airflowData={airflowData}
                   windDirection={windDirection}
-                  weather={weather}
+                  weather={effectiveWeatherMode}
                   viewMode="2D"
                   onCellClick={onCellClick}
                   compact={252}
-                  highlightedCells={highlightedCells}
                 />
               </div>
             </div>
@@ -205,17 +330,22 @@ const ControlPanel = ({
           <section>
             <SectionHeading>Environment</SectionHeading>
             {viewMode === 'weather' ? (
-              <div className="grid grid-cols-3 gap-2.5">
-                {WEATHER.map((w) => (
-                  <Button
-                    key={w.id}
-                    active={weather === w.id}
-                    onClick={() => setWeather(w.id)}
-                    icon={w.icon}
-                    label={w.label}
-                  />
-                ))}
-              </div>
+              <>
+                <p className="mb-3 text-xs text-slate-400">
+                  Presets are used as a fail-safe when live weather cannot be loaded.
+                </p>
+                <div className="grid grid-cols-3 gap-2.5">
+                  {WEATHER.map((w) => (
+                    <Button
+                      key={w.id}
+                      active={weatherMode === w.id}
+                      onClick={() => setWeatherMode(w.id)}
+                      icon={w.icon}
+                      label={w.label}
+                    />
+                  ))}
+                </div>
+              </>
             ) : (
               <>
                 <h3 className="mb-3 mt-1 text-center text-[10px] font-semibold uppercase tracking-widest text-slate-500 text-shadow-sm">

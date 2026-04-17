@@ -99,3 +99,22 @@
   border-radius: 6px;
   z-index: 50 !important;
 }
+
+@keyframes mapHighlightPulse {
+  0%, 100% {
+    stroke: #22d3ee;
+    stroke-width: 3px;
+    stroke-opacity: 0.8;
+    filter: drop-shadow(0 0 4px rgba(34, 211, 238, 0.25));
+  }
+  50% {
+    stroke: #67e8f9;
+    stroke-width: 6px;
+    stroke-opacity: 1;
+    filter: drop-shadow(0 0 10px rgba(34, 211, 238, 0.75));
+  }
+}
+
+.uhi-map-highlight {
+  animation: mapHighlightPulse 1.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}

@@ -8,6 +8,7 @@ import { calculateAirflowGrid } from './airflowEngine';
 import { calculateMetrics } from './metrics';
 import { getAISuggestions } from './aiService';
 import { getRandomCityLayout } from './cityLayouts';
+import { fetchWeather } from './services/weatherService';
 import WeatherOverlay from './components/WeatherOverlay';
 import MapViewLegend from './components/MapViewLegend';
 import RealWorldMap from './components/RealWorldMap';
@@ -33,6 +34,7 @@ function readStoredPanelWidth(key, fallback, lo, hi) {
 }
 
 const GRID_SIZE = 15;
+const DEFAULT_WEATHER_CITY = 'Delhi';
 
 const AI_HIGHLIGHT_MAX = 48;
 const AI_HIGHLIGHT_MS = 4500;
@@ -95,11 +97,23 @@ const createEmptyGrid = () => {
   return grid;
 };
 
+function getEffectiveWeatherMode(liveWeather, fallbackMode) {
+  if (!liveWeather) return fallbackMode;
+  if (liveWeather.windSpeed >= 6) return 'windy';
+  if (liveWeather.humidity >= 75 && liveWeather.temperature <= 24) return 'rainy';
+  return 'sunny';
+}
+
 const App = () => {
   const [grid, setGrid] = useState(createEmptyGrid());
   const [selectedTool, setSelectedTool] = useState('house');
   const [viewMode, setViewMode] = useState('2D');
-  const [weather, setWeather] = useState('sunny');
+  const [weatherPreset, setWeatherPreset] = useState('sunny');
+  const [weather, setWeather] = useState(null);
+  const [weatherCity, setWeatherCity] = useState(DEFAULT_WEATHER_CITY);
+  const [weatherCityInput, setWeatherCityInput] = useState(DEFAULT_WEATHER_CITY);
+  const [weatherLoading, setWeatherLoading] = useState(false);
+  const [weatherError, setWeatherError] = useState('');
   const [windDirection, setWindDirection] = useState('right');
 
   const [previousGrid, setPreviousGrid] = useState(null);
@@ -124,6 +138,10 @@ const App = () => {
   rightPanelWRef.current = rightPanelW;
 
   const panelDragRef = useRef(null);
+  const effectiveWeatherMode = useMemo(
+    () => getEffectiveWeatherMode(weather, weatherPreset),
+    [weather, weatherPreset]
+  );
 
   useEffect(() => {
     const mq = window.matchMedia('(min-width: 768px)');
@@ -163,6 +181,30 @@ const App = () => {
     };
   }, []);
 
+  const loadWeatherForCity = useCallback(async (cityName) => {
+    const normalizedCity = cityName.trim();
+    if (!normalizedCity) return;
+
+    setWeatherCity(normalizedCity);
+    setWeatherLoading(true);
+    setWeatherError('');
+
+    try {
+      const nextWeather = await fetchWeather(normalizedCity);
+      setWeather(nextWeather);
+    } catch (error) {
+      console.error('Weather API Error:', error);
+      setWeather(null);
+      setWeatherError(error?.message || 'Unable to load live weather.');
+    } finally {
+      setWeatherLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadWeatherForCity(DEFAULT_WEATHER_CITY);
+  }, [loadWeatherForCity]);
+
   const onLeftPanelResizeStart = (e) => {
     e.preventDefault();
     panelDragRef.current = { side: 'left', startX: e.clientX, startWidth: leftPanelWRef.current };
@@ -180,17 +222,17 @@ const App = () => {
   const activeGrid = comparisonMode === 'before' && previousGrid ? previousGrid : grid;
 
   const heatData = useMemo(() => {
-    const rawHeat = calculateHeatGrid(activeGrid, weather);
+    const rawHeat = calculateHeatGrid(activeGrid, effectiveWeatherMode, weather);
     return normalizeHeatGrid(rawHeat);
-  }, [activeGrid, weather]);
+  }, [activeGrid, effectiveWeatherMode, weather]);
 
   const airflowData = useMemo(() => {
-    return calculateAirflowGrid(activeGrid, windDirection, weather);
-  }, [activeGrid, windDirection, weather]);
+    return calculateAirflowGrid(activeGrid, windDirection, effectiveWeatherMode, weather);
+  }, [activeGrid, windDirection, effectiveWeatherMode, weather]);
 
   const metricsData = useMemo(() => {
-    return calculateMetrics(activeGrid, heatData, airflowData);
-  }, [activeGrid, heatData, airflowData]);
+    return calculateMetrics(activeGrid, heatData, airflowData, weather);
+  }, [activeGrid, heatData, airflowData, weather]);
 
   const [aiSuggestions, setAiSuggestions] = useState([]);
   const [aiLoading, setAiLoading] = useState(false);
@@ -255,6 +297,13 @@ const App = () => {
     setGrid(next);
   }, []);
 
+  const handleWeatherCitySubmit = useCallback(() => {
+    const normalizedCity = weatherCityInput.trim();
+    if (!normalizedCity) return;
+    setWeatherCityInput(normalizedCity);
+    loadWeatherForCity(normalizedCity);
+  }, [loadWeatherForCity, weatherCityInput]);
+
   useEffect(() => {
     if (viewMode === 'realMap') setViewMode('2D');
   }, [viewMode, setViewMode]);
@@ -304,6 +353,7 @@ const App = () => {
                 onGeoBboxChange={setGeoBbox}
                 onApplyOsmTypes={handleApplyOsmTypes}
                 onCellClick={handleCellClick}
+                highlightedCells={highlightedCells}
                 gridSize={GRID_SIZE}
               />
             </div>
@@ -325,7 +375,7 @@ const App = () => {
                 heatData={heatData}
                 airflowData={airflowData}
                 windDirection={windDirection}
-                weather={weather}
+                weather={effectiveWeatherMode}
                 viewMode={viewMode}
                 onCellClick={handleCellClick}
                 highlightedCells={highlightedCells}
@@ -334,7 +384,7 @@ const App = () => {
           )}
         </div>
         <WeatherOverlay
-          weather={weather}
+          weather={effectiveWeatherMode}
           windDirection={windDirection}
           viewMode={viewMode}
           mapPickerOpen={viewMode === 'select'}
@@ -355,15 +405,22 @@ const App = () => {
         setSelectedTool={setSelectedTool}
         viewMode={viewMode}
         setViewMode={setViewMode}
-        weather={weather}
-        setWeather={setWeather}
+        weatherMode={weatherPreset}
+        setWeatherMode={setWeatherPreset}
+        liveWeather={weather}
+        weatherCity={weatherCity}
+        weatherCityInput={weatherCityInput}
+        setWeatherCityInput={setWeatherCityInput}
+        onWeatherCitySubmit={handleWeatherCitySubmit}
+        weatherLoading={weatherLoading}
+        weatherError={weatherError}
+        effectiveWeatherMode={effectiveWeatherMode}
         windDirection={windDirection}
         setWindDirection={setWindDirection}
         grid={grid}
         heatData={heatData}
         airflowData={airflowData}
         onCellClick={handleCellClick}
-        highlightedCells={highlightedCells}
         onRandomCity={handleRandomCity}
         onResetGrid={handleResetGrid}
         comparisonMode={comparisonMode}
