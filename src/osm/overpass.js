@@ -1,4 +1,4 @@
-const DEFAULT_BBOX = { south: 28.6, west: 77.2, north: 28.65, east: 77.25 };
+const DEFAULT_BBOX = { south: 25.39, west: 81.79, north: 25.49, east: 81.92 };
 
 /**
  * Overpass QL for bbox: buildings, industry, parks, water, green, roads.

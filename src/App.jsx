@@ -35,7 +35,7 @@ function readStoredPanelWidth(key, fallback, lo, hi) {
 }
 
 const GRID_SIZE = 15;
-const DEFAULT_WEATHER_CITY = 'Delhi';
+const DEFAULT_WEATHER_CITY = 'Allahabad';
 
 const AI_HIGHLIGHT_MAX = 48;
 const AI_HIGHLIGHT_MS = 4500;
@@ -128,10 +128,6 @@ const App = () => {
   const [viewMode, setViewMode] = useState('2D');
   const [weatherPreset, setWeatherPreset] = useState('sunny');
   const [weather, setWeather] = useState(null);
-  const [weatherCity, setWeatherCity] = useState(DEFAULT_WEATHER_CITY);
-  const [weatherCityInput, setWeatherCityInput] = useState(DEFAULT_WEATHER_CITY);
-  const [weatherLoading, setWeatherLoading] = useState(false);
-  const [weatherError, setWeatherError] = useState('');
   const [windDirection, setWindDirection] = useState('right');
 
   const [previousGrid, setPreviousGrid] = useState(null);
@@ -204,19 +200,12 @@ const App = () => {
     const normalizedCity = cityName.trim();
     if (!normalizedCity) return;
 
-    setWeatherCity(normalizedCity);
-    setWeatherLoading(true);
-    setWeatherError('');
-
     try {
       const nextWeather = await fetchWeather(normalizedCity);
       setWeather(nextWeather);
     } catch (error) {
       console.error('Weather API Error:', error);
       setWeather(null);
-      setWeatherError(error?.message || 'Unable to load live weather.');
-    } finally {
-      setWeatherLoading(false);
     }
   }, []);
 
@@ -360,13 +349,6 @@ const App = () => {
     setBaselineCO2(null);
   }, [capturePreviousSnapshot]);
 
-  const handleWeatherCitySubmit = useCallback(() => {
-    const normalizedCity = weatherCityInput.trim();
-    if (!normalizedCity) return;
-    setWeatherCityInput(normalizedCity);
-    loadWeatherForCity(normalizedCity);
-  }, [loadWeatherForCity, weatherCityInput]);
-
   useEffect(() => {
     if (viewMode === 'realMap') setViewMode('2D');
   }, [viewMode, setViewMode]);
@@ -476,13 +458,6 @@ const App = () => {
         setViewMode={setViewMode}
         weatherMode={weatherPreset}
         setWeatherMode={setWeatherPreset}
-        liveWeather={weather}
-        weatherCity={weatherCity}
-        weatherCityInput={weatherCityInput}
-        setWeatherCityInput={setWeatherCityInput}
-        onWeatherCitySubmit={handleWeatherCitySubmit}
-        weatherLoading={weatherLoading}
-        weatherError={weatherError}
         effectiveWeatherMode={effectiveWeatherMode}
         windDirection={windDirection}
         setWindDirection={setWindDirection}
