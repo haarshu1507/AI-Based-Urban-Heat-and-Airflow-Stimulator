@@ -1,20 +1,98 @@
-:root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-  color: #e5f0ff;
-  background-color: #0f172a;
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@import "tailwindcss";
+
+@layer base {
+  body {
+    background-color: var(--color-slate-950);
+    color: var(--color-slate-100);
+    overflow: hidden;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
 }
 
-* {
-  box-sizing: border-box;
+/* Leaflet fills flex parent in Real World Map view */
+.leaflet-container {
+  height: 100%;
+  min-height: 280px;
+  z-index: 1;
 }
 
-body {
-  margin: 0;
-  min-height: 100vh;
+@layer utilities {
+  .glass-panel {
+    background: linear-gradient(135deg, color-mix(in srgb, var(--color-slate-800) 60%, transparent), color-mix(in srgb, var(--color-slate-900) 80%, transparent));
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid color-mix(in srgb, var(--color-cyan-500) 20%, transparent);
+    border-top: 1px solid color-mix(in srgb, var(--color-cyan-300) 30%, transparent);
+    border-left: 1px solid color-mix(in srgb, var(--color-purple-400) 20%, transparent);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+  }
+
+  .glass-legend {
+    background-color: color-mix(in srgb, var(--color-slate-900) 70%, transparent);
+    backdrop-filter: blur(8px);
+    border: 1px solid color-mix(in srgb, var(--color-slate-700) 50%, transparent);
+    border-top: 1px solid color-mix(in srgb, var(--color-slate-600) 80%, transparent);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  }
+}
+
+@keyframes rain-fall {
+  0% { transform: translateY(-20px); opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { transform: translateY(100vh); opacity: 0; }
+}
+
+@keyframes wind-sweep-right {
+  0% { transform: translateX(-10vw); opacity: 0; }
+  10% { opacity: 0.6; }
+  90% { opacity: 0.6; }
+  100% { transform: translateX(85vw); opacity: 0; }
+}
+
+@keyframes wind-sweep-left {
+  0% { transform: translateX(85vw); opacity: 0; }
+  10% { opacity: 0.6; }
+  90% { opacity: 0.6; }
+  100% { transform: translateX(-10vw); opacity: 0; }
+}
+
+@keyframes wind-sweep-down {
+  0% { transform: translateY(-10vh); opacity: 0; }
+  10% { opacity: 0.6; }
+  90% { opacity: 0.6; }
+  100% { transform: translateY(85vh); opacity: 0; }
+}
+
+@keyframes wind-sweep-up {
+  0% { transform: translateY(85vh); opacity: 0; }
+  10% { opacity: 0.6; }
+  90% { opacity: 0.6; }
+  100% { transform: translateY(-10vh); opacity: 0; }
+}
+
+@keyframes sun-ray {
+  0% { transform: rotate(0deg) scale(1); opacity: 0.4; }
+  50% { transform: rotate(180deg) scale(1.1); opacity: 0.8; }
+  100% { transform: rotate(360deg) scale(1); opacity: 0.4; }
+}
+
+@keyframes premiumPulse {
+  0%, 100% {
+    box-shadow: inset 0 0 0 1px rgba(34, 211, 238, 0.3),
+                0 0 8px rgba(34, 211, 238, 0.1);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: inset 0 0 0 2px rgba(34, 211, 238, 0.9),
+                0 0 18px 4px rgba(34, 211, 238, 0.6),
+                0 0 35px 8px rgba(34, 211, 238, 0.2);
+    transform: scale(1.06);
+  }
+}
+
+.pulse-highlight {
+  animation: premiumPulse 1.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  border-radius: 6px;
+  z-index: 50 !important;
 }
