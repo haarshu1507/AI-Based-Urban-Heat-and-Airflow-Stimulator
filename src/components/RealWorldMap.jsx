@@ -91,6 +91,7 @@ export default function RealWorldMap({
   onGeoBboxChange,
   onApplyOsmTypes,
   onCellClick,
+  highlightedCells = [],
   gridSize = 15,
 }) {
   const containerRef = useRef(null);
@@ -108,6 +109,10 @@ export default function RealWorldMap({
   const typeGrid = useMemo(
     () => (grid?.length ? grid.map((row) => row.map((c) => c.type)) : null),
     [grid]
+  );
+  const highlightKeys = useMemo(
+    () => new Set((highlightedCells ?? []).map(([r, c]) => `${r},${c}`)),
+    [highlightedCells]
   );
 
   const isAirflowViz = viewMode === 'airflow';
@@ -200,11 +205,13 @@ export default function RealWorldMap({
         } else {
           fill = VIEW_2D_FILL;
         }
+        const isHighlighted = highlightKeys.has(`${y},${x}`);
         const poly = L.polygon(latlngs, {
-          color: '#0f172a',
+          color: isHighlighted ? '#22d3ee' : '#0f172a',
+          className: isHighlighted ? 'uhi-map-highlight' : '',
           fillColor: fill,
-          fillOpacity: showLandUseIcons ? 0.88 : 0.82,
-          weight: 1,
+          fillOpacity: isHighlighted ? 0.98 : showLandUseIcons ? 0.88 : 0.82,
+          weight: isHighlighted ? 3 : 1,
         });
         poly.on('click', (e) => {
           L.DomEvent.stopPropagation(e);
@@ -253,6 +260,7 @@ export default function RealWorldMap({
     useHeatFill,
     heatData,
     airflowData,
+    highlightKeys,
     onCellClick,
     rows,
     cols,

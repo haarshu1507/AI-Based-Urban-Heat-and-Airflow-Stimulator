@@ -13,11 +13,15 @@ const emptyBreakdown = () => ({
   greenPoints: 0,
   heatPoints: 0,
   pollPoints: 0,
+  ambientTemperature: null,
+  hotspotThreshold: 30,
 });
 
+function clamp(n, lo, hi) {
+  return Math.min(hi, Math.max(lo, n));
+}
 
-
-export const calculateMetrics = (grid, heatData, airflowData) => {
+export const calculateMetrics = (grid, heatData, airflowData, liveWeather = null) => {
   if (!grid || grid.length === 0) {
     return {
       avgHeat: 0,
@@ -40,6 +44,8 @@ export const calculateMetrics = (grid, heatData, airflowData) => {
   let heatHotspots = 0;
   let totalAirflow = 0;
   const numCells = grid.length * grid[0].length;
+  const hotspotThreshold =
+    liveWeather?.temperature != null ? liveWeather.temperature + 4 : 30;
 
   for (let r = 0; r < grid.length; r++) {
     for (let c = 0; c < grid[r].length; c++) {
@@ -53,7 +59,7 @@ export const calculateMetrics = (grid, heatData, airflowData) => {
       if (heatData?.normalizedGrid?.length > 0) {
         const temp = heatData.normalizedGrid[r][c].val;
         totalHeat += temp;
-        if (temp > 30) heatHotspots++;
+        if (temp > hotspotThreshold) heatHotspots++;
       }
 
       if (airflowData && airflowData.length > 0) {
@@ -65,9 +71,9 @@ export const calculateMetrics = (grid, heatData, airflowData) => {
   const avgHeat = totalHeat / numCells;
   const greenPercent = (greenCount / numCells) * 100;
 
-  let heatScore = (avgHeat / 25) * 100;
-  if (heatScore < 0) heatScore = 0;
-  if (heatScore > 100) heatScore = 100;
+  const heatScore = liveWeather?.temperature != null
+    ? clamp(((avgHeat - 15) / 25) * 100, 0, 100)
+    : clamp((avgHeat / 25) * 100, 0, 100);
 
   const nonEmptyCells = numCells - emptyCount;
   const urbanDensity = (nonEmptyCells / numCells) * 100;
@@ -101,6 +107,8 @@ export const calculateMetrics = (grid, heatData, airflowData) => {
     greenPoints,
     heatPoints,
     pollPoints,
+    ambientTemperature: liveWeather?.temperature ?? null,
+    hotspotThreshold,
   };
 
   return {
@@ -130,11 +138,13 @@ export function formatMetricTooltipCalculation(metricId, metrics) {
   switch (metricId) {
     case 'avgHeat':
       return [
-        `Σ (per-cell heat index) = ${nf(b.totalHeat, 2)}`,
+        `Σ (per-cell temperature) = ${nf(b.totalHeat, 2)}°C`,
         `Cells = ${b.numCells}`,
-        `Average = ${nf(b.totalHeat, 2)} ÷ ${b.numCells} = ${nf(metrics.avgHeat, 2)}`,
+        `Average = ${nf(b.totalHeat, 2)} ÷ ${b.numCells} = ${nf(metrics.avgHeat, 2)}°C`,
         '',
-        'Each cell index = sum of land-use heat weights in its 3×3 neighborhood × current weather (see heat engine).',
+        b.ambientTemperature != null
+          ? `Each cell starts from live ambient weather (${nf(b.ambientTemperature, 1)}°C) and then adds local land-use heating/cooling from the 3×3 neighborhood.`
+          : 'Each cell uses the fallback land-use heat model because live weather is unavailable.',
       ].join('\n');
     case 'greenPercent':
       return [
@@ -152,7 +162,7 @@ export function formatMetricTooltipCalculation(metricId, metrics) {
       ].join('\n');
     case 'heatHotspots':
       return [
-        'Rule: cells with heat index > 30',
+        `Rule: cells with temperature > ${nf(b.hotspotThreshold, 1)}°C`,
         `Count = ${b.heatHotspots}`,
       ].join('\n');
     case 'pollutionIndex': {
@@ -172,7 +182,9 @@ export function formatMetricTooltipCalculation(metricId, metrics) {
     }
     case 'heatScore':
       return [
-        `Raw scale = (${nf(metrics.avgHeat, 2)} ÷ 25) × 100 = ${nf((metrics.avgHeat / 25) * 100, 2)}`,
+        b.ambientTemperature != null
+          ? `Raw scale = ((${nf(metrics.avgHeat, 2)} − 15) ÷ 25) × 100 = ${nf(((metrics.avgHeat - 15) / 25) * 100, 2)}`
+          : `Raw scale = (${nf(metrics.avgHeat, 2)} ÷ 25) × 100 = ${nf((metrics.avgHeat / 25) * 100, 2)}`,
         `Capped to 0–100 → ${nf(metrics.heatScore, 1)}`,
       ].join('\n');
     case 'sustainabilityScore':

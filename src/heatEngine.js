@@ -9,7 +9,20 @@ const BASE_HEAT = {
   empty: 0,
 };
 
-export const calculateHeatGrid = (grid, weather) => {
+const LIVE_TEMP_DELTA_SCALE = 0.2;
+
+function toLiveCellTemperature(cellHeatSum, liveWeather) {
+  if (!liveWeather) return cellHeatSum;
+
+  const ambientTemperature = liveWeather.temperature;
+  const temperatureFactor = ambientTemperature / 40;
+  const localizedDelta =
+    cellHeatSum * LIVE_TEMP_DELTA_SCALE * (1 + 0.3 * temperatureFactor);
+
+  return ambientTemperature + localizedDelta;
+}
+
+export const calculateHeatGrid = (grid, weatherMode, liveWeather = null) => {
   const rows = grid.length;
   if (rows === 0) return [];
   const cols = grid[0].length;
@@ -30,13 +43,15 @@ export const calculateHeatGrid = (grid, weather) => {
       }
       
       // Apply weather effect
-      if (weather === 'sunny') {
+      if (weatherMode === 'sunny') {
         cellHeatSum *= 1.2;
-      } else if (weather === 'rainy') {
+      } else if (weatherMode === 'rainy') {
         cellHeatSum *= 0.7;
-      } else if (weather === 'windy') {
+      } else if (weatherMode === 'windy') {
         cellHeatSum *= 0.9;
       }
+
+      cellHeatSum = toLiveCellTemperature(cellHeatSum, liveWeather);
       
       heatRow.push(cellHeatSum);
     }

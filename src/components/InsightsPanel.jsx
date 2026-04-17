@@ -166,10 +166,10 @@ const InsightsPanel = ({
                 🌡 Avg Temp
                 <InfoButton
                   tooltip={{
-                    title: 'Average heat index',
+                    title: 'Average cell temperature',
                     definition:
-                      'Mean of each cell’s heat index: sum of land-use weights in a 3×3 neighborhood, scaled by weather (model units, shown as °C in the sidebar for familiarity).',
-                    formula: 'avg = Σ (cell heat index) ÷ (rows × columns)',
+                      'Mean of the grid’s cell temperatures. With live weather enabled, each cell starts from the real ambient temperature and is then adjusted by nearby land use.',
+                    formula: 'avg = Σ (cell temperature) ÷ (rows × columns)',
                     calculation: formatMetricTooltipCalculation('avgHeat', metrics),
                     impact: 'Shows how hot the whole city runs in this simulation.',
                   }}
@@ -260,8 +260,8 @@ const InsightsPanel = ({
                 <InfoButton
                   tooltip={{
                     title: 'Heat hotspots',
-                    definition: 'Cells whose heat index (raw 3×3 + weather value) is greater than 30.',
-                    formula: 'hotspots = |{ cells : heat index > 30 }|',
+                    definition: 'Cells whose simulated temperature is substantially hotter than the surrounding weather baseline.',
+                    formula: 'hotspots = |{ cells : cell temperature > hotspot threshold }|',
                     calculation: formatMetricTooltipCalculation('heatHotspots', metrics),
                     impact: 'Where cooling or greening helps most.',
                   }}
@@ -308,8 +308,8 @@ const InsightsPanel = ({
                   <InfoButton
                     tooltip={{
                       title: 'Heat intensity (0–100)',
-                      definition: 'Rescales average heat index into a 0–100 gauge for the bar.',
-                      formula: 'intensity = clamp( (avg heat index ÷ 25) × 100, 0, 100 )',
+                      definition: 'Rescales the city-wide average temperature into a 0–100 stress gauge.',
+                      formula: 'intensity = clamp( scaled average temperature, 0, 100 )',
                       calculation: formatMetricTooltipCalculation('heatScore', metrics),
                       impact: 'Single number to compare layouts.',
                     }}
