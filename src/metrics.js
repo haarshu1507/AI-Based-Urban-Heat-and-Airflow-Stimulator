@@ -15,6 +15,8 @@ const emptyBreakdown = () => ({
   pollPoints: 0,
 });
 
+
+
 export const calculateMetrics = (grid, heatData, airflowData) => {
   if (!grid || grid.length === 0) {
     return {
