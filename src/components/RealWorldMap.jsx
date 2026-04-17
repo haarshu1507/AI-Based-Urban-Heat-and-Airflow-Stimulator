@@ -318,8 +318,8 @@ export default function RealWorldMap({
   };
 
   return (
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col rounded-xl border border-slate-700/80 bg-slate-950">
-      <div className="flex flex-shrink-0 flex-col gap-2 border-b border-slate-700/80 bg-slate-900/95 px-3 py-2">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-slate-700/80 bg-slate-950 shadow-[0_8px_32px_rgba(0,0,0,0.45)] transition-shadow duration-300 hover:border-slate-600/90 hover:shadow-[0_12px_40px_rgba(34,211,238,0.08)]">
+      <div className="flex flex-shrink-0 flex-col gap-2 border-b border-slate-700/80 bg-gradient-to-r from-slate-900/98 via-slate-900/95 to-slate-900/98 px-3 py-2">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <p className="text-[9px] font-bold uppercase tracking-widest text-slate-500">
@@ -348,7 +348,7 @@ export default function RealWorldMap({
             type="button"
             disabled={loadState === 'loading'}
             onClick={handleLoadVisibleArea}
-            className="rounded-lg bg-cyan-600 px-3 py-2 text-xs font-bold text-white shadow transition hover:bg-cyan-500 disabled:opacity-50"
+            className="rounded-lg bg-gradient-to-r from-cyan-600 to-blue-600 px-3 py-2 text-xs font-bold text-white shadow-md transition-all duration-200 hover:from-cyan-500 hover:to-blue-500 hover:shadow-lg hover:shadow-cyan-500/20 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/70"
           >
             {loadState === 'loading' ? 'Loading OSM…' : 'Load visible area → grid'}
           </button>

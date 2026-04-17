@@ -28,33 +28,40 @@ const WEATHER = [
   { id: 'windy', label: 'Windy', icon: '🌫️' },
 ];
 
-const Button = ({ active, onClick, icon, label, variant = 'default', ...props }) => {
-  const baseClasses = "flex flex-col sm:flex-row items-center justify-center gap-1.5 sm:gap-2 px-2 py-3 sm:px-3 sm:py-2.5 rounded-xl font-medium text-[10px] sm:text-xs tracking-wide transition-all duration-300 border active:scale-95 group";
-  
-  let variantClasses = "";
+const Button = ({ active, onClick, icon, label, variant = 'default', className = '', ...props }) => {
+  const baseClasses =
+    'flex flex-col sm:flex-row items-center justify-center gap-1.5 sm:gap-2 px-2 py-3 sm:px-3 sm:py-2.5 rounded-xl font-medium text-[10px] sm:text-xs tracking-wide transition-all duration-300 ease-out border active:scale-[0.97] group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900';
+
+  let variantClasses = '';
   if (variant === 'default') {
-    variantClasses = active 
-      ? "bg-gradient-to-br from-cyan-600 to-blue-600 border-cyan-400/50 text-white shadow-[0_0_20px_rgba(34,211,238,0.4)]" 
-      : "bg-slate-800/60 border-slate-700/50 text-slate-300 hover:bg-slate-700/80 hover:border-slate-500 hover:text-white hover:shadow-[0_4px_12px_rgba(0,0,0,0.3)] hover:-translate-y-0.5";
+    variantClasses = active
+      ? 'bg-gradient-to-br from-cyan-600 to-blue-600 border-cyan-400/50 text-white shadow-[0_0_20px_rgba(34,211,238,0.4)]'
+      : 'bg-slate-800/60 border-slate-700/50 text-slate-300 hover:bg-slate-700/90 hover:border-cyan-500/35 hover:text-white hover:shadow-[0_8px_24px_rgba(0,0,0,0.35)] hover:-translate-y-0.5';
   } else if (variant === 'danger') {
-    variantClasses = "bg-rose-900/40 border-rose-800/50 text-rose-300 hover:bg-rose-800/60 hover:border-rose-500 hover:text-rose-100 hover:shadow-[0_4px_12px_rgba(225,29,72,0.3)] hover:-translate-y-0.5";
+    variantClasses =
+      'bg-rose-900/40 border-rose-800/50 text-rose-300 hover:bg-rose-800/70 hover:border-rose-400/60 hover:text-rose-50 hover:shadow-[0_8px_24px_rgba(225,29,72,0.25)] hover:-translate-y-0.5';
   } else if (variant === 'action') {
-    variantClasses = "bg-emerald-900/40 border-emerald-800/50 text-emerald-300 hover:bg-emerald-800/60 hover:border-emerald-500 hover:text-emerald-100 hover:shadow-[0_4px_12px_rgba(16,185,129,0.3)] hover:-translate-y-0.5";
+    variantClasses =
+      'bg-emerald-900/40 border-emerald-800/50 text-emerald-300 hover:bg-emerald-800/70 hover:border-emerald-400/50 hover:text-emerald-50 hover:shadow-[0_8px_24px_rgba(16,185,129,0.25)] hover:-translate-y-0.5';
   }
 
   return (
-    <button onClick={onClick} className={`${baseClasses} ${variantClasses}`} {...props}>
-      <div className="text-xl sm:text-lg group-hover:scale-110 drop-shadow-md transition-transform duration-300 flex items-center justify-center">{icon}</div>
-      {label && <span>{label}</span>}
+    <button onClick={onClick} className={`${baseClasses} ${variantClasses} ${className}`} {...props}>
+      <div className="text-xl sm:text-lg group-hover:scale-110 drop-shadow-md transition-transform duration-300 ease-out flex items-center justify-center">
+        {icon}
+      </div>
+      {label && <span className="transition-colors duration-200">{label}</span>}
     </button>
   );
 };
 
 const SectionHeading = ({ children }) => (
-  <h2 className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-[0.15em] mb-4 flex items-center gap-2">
-    <div className="h-px bg-slate-700 flex-1" />
-    <span className="text-slate-300 drop-shadow-md">{children}</span>
-    <div className="h-px bg-slate-700 flex-1" />
+  <h2 className="group/head text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-[0.15em] mb-4 flex items-center gap-2">
+    <div className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-600 to-slate-600 transition-all duration-500 group-hover/head:via-cyan-500/40" />
+    <span className="text-slate-300 drop-shadow-md transition-colors duration-300 group-hover/head:text-cyan-200/90">
+      {children}
+    </span>
+    <div className="h-px flex-1 bg-gradient-to-l from-transparent via-slate-600 to-slate-600 transition-all duration-500 group-hover/head:via-cyan-500/40" />
   </h2>
 );
 
@@ -89,7 +96,7 @@ const ControlPanel = ({
   const showEnvironmentSection = viewMode === 'weather' || viewMode === 'airflow';
   return (
     <div
-      className={`z-20 flex h-auto w-full shrink-0 flex-col overflow-y-auto overflow-x-hidden border-slate-700/90 bg-slate-900/90 p-5 backdrop-blur-lg md:h-full md:border-l md:border-slate-700 md:p-6 ${panelWidthPx == null ? 'md:w-[350px]' : 'md:min-w-0'}`}
+      className={`z-20 flex h-auto w-full shrink-0 flex-col overflow-y-auto overflow-x-hidden border-slate-700/90 bg-gradient-to-b from-slate-900/95 via-slate-900/90 to-slate-950/95 p-5 shadow-[inset_1px_0_0_rgba(34,211,238,0.06)] backdrop-blur-xl transition-colors duration-300 md:h-full md:border-l md:border-slate-700/80 md:p-6 ${panelWidthPx == null ? 'md:w-[350px]' : 'md:min-w-0'}`}
       style={panelWidthPx != null ? { width: panelWidthPx, flexShrink: 0 } : undefined}
     >
       <div className="space-y-8 md:space-y-10">
@@ -97,13 +104,13 @@ const ControlPanel = ({
           <button
             type="button"
             onClick={() => (viewMode === 'select' ? setViewMode('2D') : setViewMode('select'))}
-            className={`flex w-full items-center justify-center gap-2 rounded-xl border px-3 py-3 text-sm font-semibold tracking-wide transition active:scale-[0.99] ${
+            className={`group flex w-full items-center justify-center gap-2 rounded-xl border px-3 py-3 text-sm font-semibold tracking-wide shadow-lg transition-all duration-300 ease-out hover:scale-[1.02] hover:shadow-xl active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 ${
               viewMode === 'select'
-                ? 'border-slate-500 bg-slate-800 text-slate-200 hover:bg-slate-700'
-                : 'border-cyan-500/50 bg-gradient-to-r from-cyan-700/90 to-blue-700/90 text-white hover:from-cyan-600 hover:to-blue-600'
+                ? 'border-slate-500 bg-slate-800 text-slate-200 hover:border-slate-400 hover:bg-slate-700/90'
+                : 'border-cyan-400/40 bg-gradient-to-r from-cyan-600 to-blue-700 text-white hover:from-cyan-500 hover:to-blue-600 hover:border-cyan-300/50'
             }`}
           >
-            <Globe size={18} className="shrink-0 opacity-90" aria-hidden />
+            <Globe size={18} className="shrink-0 opacity-90 transition-transform duration-300 group-hover:rotate-12" aria-hidden />
             {viewMode === 'select' ? 'Close map' : 'Select location'}
           </button>
         </div>
@@ -124,13 +131,13 @@ const ControlPanel = ({
                   role="option"
                   aria-selected={active}
                   onClick={() => setSelectedTool(tool.id)}
-                  className={`flex flex-col items-center justify-center gap-1 rounded-xl border px-2 py-3 text-center transition active:scale-[0.98] ${
+                  className={`group flex flex-col items-center justify-center gap-1 rounded-xl border px-2 py-3 text-center transition-all duration-200 ease-out hover:-translate-y-0.5 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 ${
                     active
-                      ? 'border-cyan-400/60 bg-gradient-to-br from-cyan-600/90 to-blue-700/90 text-white shadow-[0_0_16px_rgba(34,211,238,0.35)]'
-                      : 'border-slate-700/60 bg-slate-800/70 text-slate-300 hover:border-slate-500 hover:bg-slate-800 hover:text-white'
+                      ? 'border-cyan-400/70 bg-gradient-to-br from-cyan-600/95 to-blue-700/95 text-white shadow-[0_0_20px_rgba(34,211,238,0.4)] ring-1 ring-cyan-400/30'
+                      : 'border-slate-700/60 bg-slate-800/70 text-slate-300 hover:border-cyan-500/35 hover:bg-slate-700/85 hover:text-white hover:shadow-md hover:shadow-cyan-950/40'
                   }`}
                 >
-                  <span className="flex text-cyan-200 [&>svg]:h-[20px] [&>svg]:w-[20px]">{tool.icon}</span>
+                  <span className="flex text-cyan-200 transition-transform duration-200 group-hover:scale-105 [&>svg]:h-[20px] [&>svg]:w-[20px]">{tool.icon}</span>
                   <span className="text-[10px] font-semibold leading-tight tracking-wide">{tool.label}</span>
                 </button>
               );
@@ -147,7 +154,7 @@ const ControlPanel = ({
               onClick={() => setVizMenuOpen((o) => !o)}
               aria-expanded={vizMenuOpen}
               aria-haspopup="listbox"
-              className="flex w-full items-center justify-between gap-3 rounded-xl border border-slate-600/70 bg-slate-800/80 px-3 py-3 text-left shadow-inner transition hover:border-slate-500 hover:bg-slate-800 active:scale-[0.99]"
+              className="flex w-full items-center justify-between gap-3 rounded-xl border border-slate-600/70 bg-slate-800/80 px-3 py-3 text-left shadow-inner transition-all duration-200 ease-out hover:border-cyan-500/40 hover:bg-slate-800 hover:shadow-md active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/45"
             >
               <span className="flex min-w-0 items-center gap-2.5 text-sm font-medium text-slate-100">
                 <span className="flex shrink-0 text-cyan-300 [&>svg]:h-[18px] [&>svg]:w-[18px]">
@@ -157,14 +164,14 @@ const ControlPanel = ({
               </span>
               <ChevronDown
                 size={20}
-                className={`shrink-0 text-slate-400 transition-transform duration-200 ${vizMenuOpen ? 'rotate-180' : ''}`}
+                className={`shrink-0 text-slate-400 transition-transform duration-300 ease-out ${vizMenuOpen ? 'rotate-180 text-cyan-400' : ''}`}
                 aria-hidden
               />
             </button>
             {vizMenuOpen ? (
               <ul
                 role="listbox"
-                className="absolute left-0 right-0 top-full z-30 mt-1 max-h-[min(70vh,320px)] overflow-auto rounded-xl border border-slate-600/80 bg-slate-900/95 py-1 shadow-[0_16px_48px_rgba(0,0,0,0.55)] backdrop-blur-md"
+                className="absolute left-0 right-0 top-full z-30 mt-1 max-h-[min(70vh,320px)] origin-top overflow-auto rounded-xl border border-slate-600/80 bg-slate-900/95 py-1 shadow-[0_16px_48px_rgba(0,0,0,0.55)] shadow-cyan-950/20 backdrop-blur-md"
               >
                 {VIEWS.map((view) => {
                   const selected = viewMode === view.id;
@@ -176,10 +183,10 @@ const ControlPanel = ({
                           setViewMode(view.id);
                           setVizMenuOpen(false);
                         }}
-                        className={`flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm transition ${
+                        className={`flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm transition-colors duration-150 ${
                           selected
                             ? 'bg-cyan-600/25 text-cyan-100'
-                            : 'text-slate-300 hover:bg-slate-800/90 hover:text-white'
+                            : 'text-slate-300 hover:bg-gradient-to-r hover:from-slate-800/90 hover:to-cyan-950/20 hover:text-white'
                         }`}
                       >
                         <span className="flex shrink-0 [&>svg]:h-[18px] [&>svg]:w-[18px]">{view.icon}</span>
@@ -198,8 +205,8 @@ const ControlPanel = ({
             <p className="mb-2 text-[8px] font-bold uppercase tracking-widest text-slate-400">
               2D map
             </p>
-            <div className="rounded-xl border border-slate-600/70 bg-slate-950/90 p-2 shadow-[0_8px_24px_rgba(0,0,0,0.4)] backdrop-blur-md">
-              <div className="mx-auto flex max-w-full justify-center overflow-hidden rounded-md border border-slate-700/80">
+            <div className="group/map rounded-xl border border-slate-600/70 bg-slate-950/90 p-2 shadow-[0_8px_24px_rgba(0,0,0,0.4)] backdrop-blur-md transition-all duration-300 hover:border-cyan-500/25 hover:shadow-[0_12px_40px_rgba(34,211,238,0.12)]">
+              <div className="mx-auto flex max-w-full justify-center overflow-hidden rounded-md border border-slate-700/80 transition-colors duration-300 group-hover/map:border-slate-600">
                 <GridCanvas
                   grid={grid}
                   heatData={heatData}
@@ -256,14 +263,14 @@ const ControlPanel = ({
           <SectionHeading>Systems</SectionHeading>
 
           {hasPreviousGrid ? (
-            <div className="mb-4 flex rounded-lg border border-slate-700/50 bg-slate-900 p-1 shadow-inner">
+            <div className="mb-4 flex rounded-lg border border-slate-700/50 bg-slate-900 p-1 shadow-inner transition-shadow duration-300 hover:shadow-md">
               <button
                 type="button"
                 onClick={() => setComparisonMode('before')}
-                className={`flex-1 rounded-md py-2 text-xs font-bold tracking-wide transition-all ${
+                className={`flex-1 rounded-md py-2 text-xs font-bold tracking-wide transition-all duration-200 ${
                   comparisonMode === 'before'
                     ? 'bg-slate-700 text-white shadow-md'
-                    : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+                    : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200 hover:scale-[1.02]'
                 }`}
               >
                 ◀ Before
@@ -271,10 +278,10 @@ const ControlPanel = ({
               <button
                 type="button"
                 onClick={() => setComparisonMode('after')}
-                className={`flex-1 rounded-md py-2 text-xs font-bold tracking-wide transition-all ${
+                className={`flex-1 rounded-md py-2 text-xs font-bold tracking-wide transition-all duration-200 ${
                   comparisonMode === 'after'
                     ? 'border border-cyan-700/50 bg-cyan-900/50 text-cyan-300 shadow-md'
-                    : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+                    : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200 hover:scale-[1.02]'
                 }`}
               >
                 After ▶

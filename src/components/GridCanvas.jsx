@@ -85,7 +85,7 @@ const GridCanvas = ({
       }
     >
       <div
-        className="grid shrink-0 gap-[1px] rounded-lg border border-slate-700 bg-slate-800 p-[1px] shadow-2xl"
+        className="grid shrink-0 gap-[1px] rounded-lg border border-slate-700 bg-slate-800 p-[1px] shadow-2xl transition-shadow duration-500 hover:shadow-[0_0_48px_rgba(34,211,238,0.12)] hover:border-slate-600/90"
         style={
           mapPx != null
             ? {
@@ -118,8 +118,8 @@ const GridCanvas = ({
             const typeDef = TYPE_COLORS[cell.type] || TYPE_COLORS.empty;
             const isEmpty = cell.type === 'empty';
             let cellClass = `
-                cursor-pointer transition-colors duration-300 ease-in-out relative flex items-center justify-center
-                border border-slate-900/20 hover:border-slate-900/60
+                cursor-pointer transition-all duration-200 ease-out relative flex items-center justify-center
+                border border-slate-900/20 hover:z-[2] hover:border-cyan-400/35 hover:brightness-110 hover:shadow-[inset_0_0_12px_rgba(34,211,238,0.15)]
                 ${isEmpty ? 'overflow-hidden' : ''}
                 ${isHighlighted ? 'pulse-highlight z-[1]' : ''}
             `;

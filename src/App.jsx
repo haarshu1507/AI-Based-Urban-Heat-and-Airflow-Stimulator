@@ -361,7 +361,7 @@ const App = () => {
   const controlWidthProp = isMdLayout ? rightPanelW : undefined;
 
   return (
-    <div className="h-screen w-screen flex flex-col overflow-hidden bg-slate-950 font-sans md:flex-row">
+    <div className="h-screen w-screen flex flex-col overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 font-sans md:flex-row">
       <InsightsPanel
         metrics={metricsData}
         previousMetrics={previousMetrics}

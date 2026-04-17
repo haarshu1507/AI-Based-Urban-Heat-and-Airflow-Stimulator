@@ -153,7 +153,7 @@ const InsightsPanel = ({
     >
       
       <div className="mb-6 shrink-0 md:mb-10">
-        <h1 className="text-base font-extrabold leading-snug tracking-tight text-transparent bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text md:text-lg lg:text-xl">
+        <h1 className="text-base font-extrabold leading-snug tracking-tight text-transparent bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text transition-[filter,opacity] duration-300 hover:brightness-110 md:text-lg lg:text-xl">
           Smart Urban Heat and Airflow Simulator
         </h1>
       </div>
@@ -162,10 +162,10 @@ const InsightsPanel = ({
         {/* Live Metrics Section */}
         <section>
           <SectionHeading>Live Statistics</SectionHeading>
-          <div className="flex flex-col gap-4 p-5 md:p-6 bg-slate-900/60 backdrop-blur-md border border-slate-700/60 rounded-2xl shadow-inner relative group">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/5 blur-[50px] rounded-full group-hover:bg-cyan-500/10 transition-colors duration-700" />
+          <div className="flex flex-col gap-4 p-5 md:p-6 bg-slate-900/60 backdrop-blur-md border border-slate-700/60 rounded-2xl shadow-inner relative group transition-all duration-300 hover:border-cyan-500/25 hover:shadow-lg hover:shadow-cyan-950/20">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/5 blur-[50px] rounded-full group-hover:bg-cyan-500/15 transition-colors duration-700" />
 
-            <div className="flex justify-between items-center text-sm z-10 hover:z-50 shadow-sm">
+            <div className="flex justify-between items-center text-sm z-10 rounded-lg px-2 py-1 -mx-1 transition-colors duration-200 hover:z-50 hover:bg-slate-800/40">
               <span className="text-slate-300 font-medium flex items-center">
                 🌡 Avg Temp
                 <InfoButton
@@ -194,7 +194,7 @@ const InsightsPanel = ({
               )}
             </div>
 
-            <div className="flex justify-between items-center text-sm z-10 hover:z-50 shadow-sm">
+            <div className="flex justify-between items-center text-sm z-10 rounded-lg px-2 py-1 -mx-1 transition-colors duration-200 hover:z-50 hover:bg-slate-800/40">
               <span className="text-slate-300 font-medium flex items-center">
                 🌳 Greenery
                 <InfoButton
@@ -222,7 +222,7 @@ const InsightsPanel = ({
               )}
             </div>
 
-            <div className="flex justify-between items-center text-sm z-10 hover:z-50 shadow-sm">
+            <div className="flex justify-between items-center text-sm z-10 rounded-lg px-2 py-1 -mx-1 transition-colors duration-200 hover:z-50 hover:bg-slate-800/40">
               <span className="text-slate-300 font-medium flex items-center">
                 🏢 Built Area
                 <InfoButton
@@ -240,7 +240,7 @@ const InsightsPanel = ({
               </span>
             </div>
 
-            <div className="flex justify-between items-center text-sm z-10 hover:z-50 shadow-sm">
+            <div className="flex justify-between items-center text-sm z-10 rounded-lg px-2 py-1 -mx-1 transition-colors duration-200 hover:z-50 hover:bg-slate-800/40">
               <span className="text-slate-300 font-medium flex items-center">
                 🏙 Urban Density
                 <InfoButton
@@ -258,7 +258,7 @@ const InsightsPanel = ({
               </span>
             </div>
 
-            <div className="flex justify-between items-center text-sm z-10 hover:z-50 shadow-sm">
+            <div className="flex justify-between items-center text-sm z-10 rounded-lg px-2 py-1 -mx-1 transition-colors duration-200 hover:z-50 hover:bg-slate-800/40">
               <span className="text-slate-300 font-medium flex items-center">
                 🔥 Heat Hotspots
                 <InfoButton
@@ -286,7 +286,7 @@ const InsightsPanel = ({
               )}
             </div>
 
-            <div className="flex justify-between items-center text-sm z-10 hover:z-50 shadow-sm">
+            <div className="flex justify-between items-center text-sm z-10 rounded-lg px-2 py-1 -mx-1 transition-colors duration-200 hover:z-50 hover:bg-slate-800/40">
               <span className="text-slate-300 font-medium flex items-center">
                 🏭 Pollution Index
                 <InfoButton
