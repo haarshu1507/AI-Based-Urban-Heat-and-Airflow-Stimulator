@@ -110,7 +110,8 @@ const GridCanvas = ({
           grid[rIdx].map((cell, cIdx) => {
             const isHeatmap = viewMode === 'heatmap';
             const isAirflow = viewMode === 'airflow';
-            const isWeatherWindy = viewMode === 'weather' && weather === 'windy';
+            const isWeatherWindy =
+              (viewMode === 'weather' || viewMode === '2D') && weather === 'windy';
 
             const is2D = viewMode === '2D' || viewMode === 'weather';
             const isHighlighted = highlightKeys.has(`${rIdx},${cIdx}`);

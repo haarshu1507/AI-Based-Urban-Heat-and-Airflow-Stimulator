@@ -115,13 +115,6 @@ function emissionWeightByType(type) {
   }
 }
 
-function getEffectiveWeatherMode(liveWeather, fallbackMode) {
-  if (!liveWeather) return fallbackMode;
-  if (liveWeather.windSpeed >= 6) return 'windy';
-  if (liveWeather.humidity >= 75 && liveWeather.temperature <= 24) return 'rainy';
-  return 'sunny';
-}
-
 const App = () => {
   const [grid, setGrid] = useState(createEmptyGrid());
   const [selectedTool, setSelectedTool] = useState('house');
@@ -153,10 +146,8 @@ const App = () => {
   rightPanelWRef.current = rightPanelW;
 
   const panelDragRef = useRef(null);
-  const effectiveWeatherMode = useMemo(
-    () => getEffectiveWeatherMode(weather, weatherPreset),
-    [weather, weatherPreset]
-  );
+  /** User-selected preset drives heat/airflow; live `weather` still sets ambient temp in engines. */
+  const effectiveWeatherMode = weatherPreset;
 
   useEffect(() => {
     const mq = window.matchMedia('(min-width: 768px)');
@@ -229,14 +220,14 @@ const App = () => {
 
   const activeGrid = comparisonMode === 'before' && previousGrid ? previousGrid : grid;
 
-  const heatData = useMemo(() => {
-    const rawHeat = calculateHeatGrid(activeGrid, effectiveWeatherMode, weather);
-    return normalizeHeatGrid(rawHeat);
-  }, [activeGrid, effectiveWeatherMode, weather]);
-
   const airflowData = useMemo(() => {
     return calculateAirflowGrid(activeGrid, windDirection, effectiveWeatherMode, weather);
   }, [activeGrid, windDirection, effectiveWeatherMode, weather]);
+
+  const heatData = useMemo(() => {
+    const rawHeat = calculateHeatGrid(activeGrid, effectiveWeatherMode, weather, airflowData);
+    return normalizeHeatGrid(rawHeat);
+  }, [activeGrid, effectiveWeatherMode, weather, airflowData]);
 
   const metricsData = useMemo(() => {
     return calculateMetrics(activeGrid, heatData, airflowData, weather);

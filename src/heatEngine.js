@@ -22,7 +22,17 @@ function toLiveCellTemperature(cellHeatSum, liveWeather) {
   return ambientTemperature + localizedDelta;
 }
 
-export const calculateHeatGrid = (grid, weatherMode, liveWeather = null) => {
+/** Stronger spread between presets so toggles visibly move °C after normalization. */
+const WEATHER_MULT = {
+  sunny: 1.18,
+  rainy: 0.58,
+  windy: 0.86,
+};
+
+/** Extra cooling on windy days where local airflow is high (simulated wind chill). */
+const WIND_CHILL_FROM_AIRFLOW = 1.35;
+
+export const calculateHeatGrid = (grid, weatherMode, liveWeather = null, airflowGrid = null) => {
   const rows = grid.length;
   if (rows === 0) return [];
   const cols = grid[0].length;
@@ -42,13 +52,12 @@ export const calculateHeatGrid = (grid, weatherMode, liveWeather = null) => {
         }
       }
       
-      // Apply weather effect
-      if (weatherMode === 'sunny') {
-        cellHeatSum *= 1.2;
-      } else if (weatherMode === 'rainy') {
-        cellHeatSum *= 0.7;
-      } else if (weatherMode === 'windy') {
-        cellHeatSum *= 0.9;
+      const mult = WEATHER_MULT[weatherMode] ?? 1;
+      cellHeatSum *= mult;
+
+      if (weatherMode === 'windy' && airflowGrid?.[r]?.[c] != null) {
+        const af = Math.max(0, Math.min(5, airflowGrid[r][c]));
+        cellHeatSum -= af * WIND_CHILL_FROM_AIRFLOW;
       }
 
       cellHeatSum = toLiveCellTemperature(cellHeatSum, liveWeather);

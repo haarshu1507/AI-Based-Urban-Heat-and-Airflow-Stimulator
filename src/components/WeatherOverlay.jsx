@@ -1,8 +1,10 @@
 import React, { useMemo } from 'react';
 
+const WEATHER_EFFECT_VIEWS = new Set(['2D', 'weather', '3D']);
+
 const WeatherOverlay = ({ weather, windDirection, viewMode, mapPickerOpen }) => {
   if (mapPickerOpen) return null;
-  if (viewMode !== 'weather') return null;
+  if (!WEATHER_EFFECT_VIEWS.has(viewMode)) return null;
 
   const drops = useMemo(() => {
     if (weather !== 'rainy') return [];

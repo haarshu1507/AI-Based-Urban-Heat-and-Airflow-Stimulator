@@ -62,6 +62,8 @@ export const calculateAirflowGrid = (grid, windDirection, weatherMode, liveWeath
       if (liveWeather) {
         airflow *= 1 + windFactor;
         if (lowWind) airflow *= 0.35;
+      } else if (weatherMode === 'windy') {
+        airflow = Math.min(5, airflow * 1.25 + 0.35);
       }
 
       if (airflow < 0) airflow = 0;

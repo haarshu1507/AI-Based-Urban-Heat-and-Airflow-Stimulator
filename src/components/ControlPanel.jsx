@@ -228,7 +228,9 @@ const ControlPanel = ({
             {viewMode === 'weather' ? (
               <>
                 <p className="mb-3 text-xs text-slate-400">
-                  Presets are used as a fail-safe when live weather cannot be loaded.
+                  Sunny / rainy / windy change simulated cell temperatures and effects. When the API
+                  loads, it still sets ambient temperature; the preset you pick always drives the
+                  scenario.
                 </p>
                 <div className="grid grid-cols-3 gap-2.5">
                   {WEATHER.map((w) => (
