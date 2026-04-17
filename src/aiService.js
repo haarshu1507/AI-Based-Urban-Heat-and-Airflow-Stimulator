@@ -119,7 +119,7 @@ function normalizeSuggestions(rawSuggestions) {
       return {
         id: item.id ? String(item.id) : `${type}-${index + 1}`,
         type,
-        message,
+        message: message.replace(/bulldoze|remove all|clear all|erase everything/gi, 'make targeted changes'),
         severity,
         icon,
       };
@@ -133,9 +133,16 @@ Analyze this smart city layout and provide 3-5 actionable suggestions to improve
 * improve airflow
 * increase sustainability
 * reduce pollution
+* reduce net carbon emissions and increase carbon credits
 
 City Data:
 ${JSON.stringify(cityContext, null, 2)}
+
+Important constraints:
+* Do not suggest removing all buildings.
+* Keep a minimum urban density of at least 25% active developed cells.
+* Suggest minimal, targeted zoning changes only.
+* Also include carbon reduction impact in suggestions.
 
 Respond with ONLY a single JSON array (no markdown fences, no text before or after the array). Follow this exact structure:
 [
@@ -219,7 +226,7 @@ async function fetchGroqSuggestions(promptText, apiKey) {
   return normalizeSuggestions(parseSuggestionsFromModelText(rawText)).slice(0, 5);
 }
 
-export async function getAISuggestions(grid, metrics, airflowData) {
+export async function getAISuggestions(grid, metrics, airflowData, carbonContext = null) {
   const geminiApiKey = import.meta.env.VITE_GEMINI_API_KEY?.trim();
   const groqApiKey = import.meta.env.VITE_GROQ_API_KEY?.trim();
 
@@ -240,7 +247,8 @@ export async function getAISuggestions(grid, metrics, airflowData) {
 
   const cityContext = {
     metrics: metrics,
-    zoningSummary: gridSummary
+    zoningSummary: gridSummary,
+    carbon: carbonContext || { CO2_tons: 0, carbonCredits: 0 },
   };
   const promptText = buildPromptText(cityContext);
 

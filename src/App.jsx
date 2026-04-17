@@ -9,6 +9,7 @@ import { calculateMetrics } from './metrics';
 import { getAISuggestions } from './aiService';
 import { getRandomCityLayout } from './cityLayouts';
 import { fetchWeather } from './services/weatherService';
+import { calculateCarbon } from './engine/carbonEngine';
 import WeatherOverlay from './components/WeatherOverlay';
 import MapViewLegend from './components/MapViewLegend';
 import RealWorldMap from './components/RealWorldMap';
@@ -38,6 +39,8 @@ const DEFAULT_WEATHER_CITY = 'Delhi';
 
 const AI_HIGHLIGHT_MAX = 48;
 const AI_HIGHLIGHT_MS = 4500;
+const CARBON_HOTSPOT_HEAT_NORM = 0.7;
+const CARBON_HOTSPOT_EMISSION_WEIGHT = 6;
 
 /** Map an AI suggestion type to grid cells so the user can see where it applies. */
 function cellsForAISuggestion(suggestion, grid, heatData, airflowData) {
@@ -97,6 +100,21 @@ const createEmptyGrid = () => {
   return grid;
 };
 
+function emissionWeightByType(type) {
+  switch (type) {
+    case 'industry':
+      return 10;
+    case 'skyscraper':
+      return 6;
+    case 'house':
+      return 3;
+    case 'road':
+      return 4;
+    default:
+      return 0;
+  }
+}
+
 function getEffectiveWeatherMode(liveWeather, fallbackMode) {
   if (!liveWeather) return fallbackMode;
   if (liveWeather.windSpeed >= 6) return 'windy';
@@ -119,6 +137,7 @@ const App = () => {
   const [previousGrid, setPreviousGrid] = useState(null);
   const [previousMetrics, setPreviousMetrics] = useState(null);
   const [comparisonMode, setComparisonMode] = useState('after');
+  const [baselineCO2, setBaselineCO2] = useState(null);
   /** When set, the 15×15 grid aligns to this geographic bbox on the real map & in OSM fetch. */
   const [geoBbox, setGeoBbox] = useState(null);
 
@@ -234,6 +253,29 @@ const App = () => {
     return calculateMetrics(activeGrid, heatData, airflowData, weather);
   }, [activeGrid, heatData, airflowData, weather]);
 
+  const carbonData = useMemo(() => {
+    const base = calculateCarbon(activeGrid, weather);
+    let carbonHotspots = 0;
+    for (let r = 0; r < activeGrid.length; r++) {
+      for (let c = 0; c < activeGrid[r].length; c++) {
+        const heatNorm = heatData?.normalizedGrid?.[r]?.[c]?.norm ?? 0;
+        const emissionWeight = emissionWeightByType(activeGrid[r][c]?.type);
+        if (heatNorm >= CARBON_HOTSPOT_HEAT_NORM && emissionWeight >= CARBON_HOTSPOT_EMISSION_WEIGHT) {
+          carbonHotspots += 1;
+        }
+      }
+    }
+    return { ...base, carbonHotspots };
+  }, [activeGrid, weather, heatData]);
+
+  const currentScenarioCarbon = useMemo(() => calculateCarbon(grid, weather), [grid, weather]);
+  const effectiveBaselineCO2 = baselineCO2 ?? currentScenarioCarbon.CO2_tons;
+  const carbonCredits = Math.max(0, effectiveBaselineCO2 - currentScenarioCarbon.CO2_tons);
+  const handleSetCurrentBaseline = useCallback(() => {
+    setBaselineCO2(currentScenarioCarbon.CO2_tons);
+    setComparisonMode('after');
+  }, [currentScenarioCarbon]);
+
   const [aiSuggestions, setAiSuggestions] = useState([]);
   const [aiLoading, setAiLoading] = useState(false);
   const aiRequestInFlightRef = useRef(false);
@@ -265,7 +307,10 @@ const App = () => {
     aiRequestInFlightRef.current = true;
     setAiLoading(true);
     try {
-      const suggestions = await getAISuggestions(grid, metricsData, airflowData);
+      const suggestions = await getAISuggestions(grid, metricsData, airflowData, {
+        CO2_tons: currentScenarioCarbon.CO2_tons,
+        carbonCredits,
+      });
       setAiSuggestions(suggestions);
     } catch (err) {
       console.error('AI suggestions error', err);
@@ -273,9 +318,21 @@ const App = () => {
       aiRequestInFlightRef.current = false;
       setAiLoading(false);
     }
-  }, [grid, metricsData, airflowData]);
+  }, [grid, metricsData, airflowData, currentScenarioCarbon, carbonCredits]);
+
+  const capturePreviousSnapshot = useCallback(() => {
+    setPreviousGrid(grid.map((row) => row.map((cell) => ({ ...cell }))));
+    setPreviousMetrics(metricsData);
+    setComparisonMode('after');
+  }, [grid, metricsData]);
+
+  useEffect(() => {
+    if (baselineCO2 != null) return;
+    setBaselineCO2(currentScenarioCarbon.CO2_tons);
+  }, [baselineCO2, currentScenarioCarbon]);
 
   const handleCellClick = (row, col) => {
+    capturePreviousSnapshot();
     const newGrid = [...grid];
     newGrid[row] = [...newGrid[row]];
     newGrid[row][col] = { type: selectedTool };
@@ -283,19 +340,25 @@ const App = () => {
   };
 
   const handleRandomCity = () => {
+    capturePreviousSnapshot();
     setGeoBbox(null);
     setGrid(getRandomCityLayout());
+    setBaselineCO2(null);
   };
 
   const handleResetGrid = () => {
+    capturePreviousSnapshot();
     setGeoBbox(null);
     setGrid(createEmptyGrid());
+    setBaselineCO2(null);
   };
 
   const handleApplyOsmTypes = useCallback((types) => {
+    capturePreviousSnapshot();
     const next = types.map((row) => row.map((t) => ({ type: t })));
     setGrid(next);
-  }, []);
+    setBaselineCO2(null);
+  }, [capturePreviousSnapshot]);
 
   const handleWeatherCitySubmit = useCallback(() => {
     const normalizedCity = weatherCityInput.trim();
@@ -326,6 +389,12 @@ const App = () => {
         aiLoading={aiLoading}
         aiSuggestions={aiSuggestions}
         onSuggestionClick={handleSuggestionClick}
+        carbonData={{
+          ...carbonData,
+          carbonCredits: Math.max(0, effectiveBaselineCO2 - (carbonData?.CO2_tons || 0)),
+        }}
+        baselineCO2={effectiveBaselineCO2}
+        onSetCurrentBaseline={handleSetCurrentBaseline}
       />
       <div
         role="separator"
