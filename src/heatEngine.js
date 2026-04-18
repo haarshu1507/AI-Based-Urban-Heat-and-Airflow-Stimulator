@@ -11,10 +11,21 @@ const BASE_HEAT = {
 
 const LIVE_TEMP_DELTA_SCALE = 0.2;
 
-function toLiveCellTemperature(cellHeatSum, liveWeather) {
+/**
+ * Same API ambient for every preset made rainy look hotter than sunny when neighborhood
+ * sums are negative (rainy ×0.58 weakens cooling deltas). Shift effective ambient by scenario.
+ */
+const PRESET_AMBIENT_ADJ_C = {
+  sunny: 1.2,
+  rainy: -4.5,
+  windy: -1,
+};
+
+function toLiveCellTemperature(cellHeatSum, liveWeather, weatherMode) {
   if (!liveWeather) return cellHeatSum;
 
-  const ambientTemperature = liveWeather.temperature;
+  const adj = PRESET_AMBIENT_ADJ_C[weatherMode] ?? 0;
+  const ambientTemperature = liveWeather.temperature + adj;
   const temperatureFactor = ambientTemperature / 40;
   const localizedDelta =
     cellHeatSum * LIVE_TEMP_DELTA_SCALE * (1 + 0.3 * temperatureFactor);
@@ -60,7 +71,7 @@ export const calculateHeatGrid = (grid, weatherMode, liveWeather = null, airflow
         cellHeatSum -= af * WIND_CHILL_FROM_AIRFLOW;
       }
 
-      cellHeatSum = toLiveCellTemperature(cellHeatSum, liveWeather);
+      cellHeatSum = toLiveCellTemperature(cellHeatSum, liveWeather, weatherMode);
       
       heatRow.push(cellHeatSum);
     }
