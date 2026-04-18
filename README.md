@@ -103,6 +103,7 @@ Live metrics include:
 - tries Gemini first
 - falls back to Groq
 - falls back to rule-based suggestions if external AI providers are unavailable
+- when **net CO₂ is high** (modeled `CO2_tons` ≥ threshold in `src/aiConstants.js`, or many industrial cells), prompts require a **`carbon`** suggestion with **concrete decarbonization steps**; LLM output is padded with a fallback carbon row if missing
 - suggestion clicks highlight relevant cells in the grid/map
 
 ### 6) 3D Scene

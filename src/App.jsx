@@ -71,6 +71,10 @@ function cellsForAISuggestion(suggestion, grid, heatData, airflowData) {
         case 'sustainability':
           if (cell.type === 'empty' || cell.type === 'road' || cell.type === 'industry') cells.push([r, c]);
           break;
+        case 'carbon':
+          if (cell.type === 'industry' || cell.type === 'road' || cell.type === 'skyscraper') cells.push([r, c]);
+          else if (cell.type === 'park' || cell.type === 'forest' || cell.type === 'water') cells.push([r, c]);
+          break;
         default:
           break;
       }

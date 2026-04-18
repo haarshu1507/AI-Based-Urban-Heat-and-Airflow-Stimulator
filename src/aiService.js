@@ -1,4 +1,5 @@
 import { generateAISuggestions as fallbackAISuggestions } from './aiEngine';
+import { AI_HIGH_CO2_TONS, AI_HIGH_INDUSTRY_CELLS } from './aiConstants.js';
 
 const GEMINI_MODEL_URL =
   'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
@@ -11,6 +12,7 @@ const DEFAULT_ICON_BY_TYPE = {
   pollution: '🏭',
   greenery: '🌳',
   density: '🏙',
+  carbon: '♻️',
 };
 
 /** Remove ``` / ```json fences if the model wrapped the payload. */
@@ -79,13 +81,18 @@ function parseSuggestionsFromModelText(rawText) {
 }
 
 function normalizeSuggestionType(type, message = '') {
+  const explicit = `${type || ''}`.toLowerCase().trim();
+  if (explicit === 'carbon') return 'carbon';
+
   const raw = `${type || ''} ${message || ''}`.toLowerCase().replace(/[^a-z\s-]/g, ' ');
   if (/(air\s*flow|airflow|ventilation|ventilate|wind|breeze)/.test(raw)) return 'airflow';
   if (/(green|greenery|park|forest|trees?|plant|vegetation)/.test(raw)) return 'greenery';
+  if (/(co2|decarbon|greenhouse|\bghg\b|net\s*zero|climate\s*mitigation)/.test(raw)) return 'carbon';
   if (/(pollution|air\s*quality|emission|industry|industrial|smog|toxin)/.test(raw)) return 'pollution';
   if (/(density|dense|crowd|congestion|overbuild|overpopulation|compact)/.test(raw)) return 'density';
   if (/(sustain|efficien|resilien|eco|climate)/.test(raw)) return 'sustainability';
   if (/(heat|hot|cool|thermal|temperature|shade|cooling)/.test(raw)) return 'heat';
+  if (/(carbon\s*sink|carbon\s*credit|low\s*carbon)/.test(raw)) return 'carbon';
   return 'sustainability';
 }
 
@@ -94,7 +101,7 @@ function normalizeSeverity(severity, type) {
   if (/(red|high|critical|urgent|severe)/.test(raw)) return 'red';
   if (/(yellow|medium|moderate|warning|caution)/.test(raw)) return 'yellow';
   if (/(green|low|good|positive|safe)/.test(raw)) return 'green';
-  if (type === 'heat' || type === 'pollution') return 'red';
+  if (type === 'heat' || type === 'pollution' || type === 'carbon') return 'red';
   if (type === 'airflow' || type === 'density') return 'yellow';
   return 'green';
 }
@@ -127,6 +134,21 @@ function normalizeSuggestions(rawSuggestions) {
 }
 
 function buildPromptText(cityContext) {
+  const highCo2 =
+    cityContext?.carbonAnalysis?.isHighNetCo2 === true ||
+    Number(cityContext?.carbon?.CO2_tons) >= AI_HIGH_CO2_TONS;
+
+  const carbonBlock = highCo2
+    ? `
+CRITICAL — HIGH NET CO₂ (simulated CO2_tons ≥ ${AI_HIGH_CO2_TONS} or many industrial cells):
+* You MUST include at least ONE object with "type": "carbon".
+* That "carbon" suggestion must give CONCRETE mitigation steps for this layout: e.g. reduce industrial / heavy-road footprint, add forests and parks as carbon sinks, shift toward mixed-use or greener zoning, efficiency and electrification in plain language.
+* Phrase the message as problem + solution (what to change on the ground and why it lowers emissions).
+`
+    : `
+* If carbon.CO2_tons is elevated or carbonCredits are low, mention emission reduction where relevant.
+`;
+
   return `
 Analyze this smart city layout and provide 3-5 actionable suggestions to improve:
 * reduce heat
@@ -134,7 +156,7 @@ Analyze this smart city layout and provide 3-5 actionable suggestions to improve
 * increase sustainability
 * reduce pollution
 * reduce net carbon emissions and increase carbon credits
-
+${carbonBlock}
 City Data:
 ${JSON.stringify(cityContext, null, 2)}
 
@@ -142,16 +164,16 @@ Important constraints:
 * Do not suggest removing all buildings.
 * Keep a minimum urban density of at least 25% active developed cells.
 * Suggest minimal, targeted zoning changes only.
-* Also include carbon reduction impact in suggestions.
+${highCo2 ? `* At least one suggestion MUST use type "carbon" with severity "red" or "yellow".` : ''}
 
 Respond with ONLY a single JSON array (no markdown fences, no text before or after the array). Follow this exact structure:
 [
   {
     "id": "unique-string",
-    "type": "heat | airflow | sustainability | pollution | greenery | density",
+    "type": "heat | airflow | sustainability | pollution | greenery | density | carbon",
     "message": "Actionable suggestion text...",
     "severity": "red | yellow | green",
-    "icon": "🔥 | 🌬 | 🌳 | 🏭 | 💧 | 🏙 | ✨"
+    "icon": "🔥 | 🌬 | 🌳 | 🏭 | 💧 | 🏙 | ✨ | ♻️"
   }
 ]
 `;
@@ -187,6 +209,23 @@ async function fetchGeminiSuggestions(promptText, apiKey) {
   }
 
   return normalizeSuggestions(parseSuggestionsFromModelText(rawText)).slice(0, 5);
+}
+
+/**
+ * If layout is high-CO₂, guarantee at least one "carbon" row when the model omitted it.
+ */
+function ensureCarbonSuggestionIfHigh(suggestions, carbonAnalysis) {
+  if (!carbonAnalysis?.isHighNetCo2 || !Array.isArray(suggestions)) return suggestions;
+  if (suggestions.some((s) => s.type === 'carbon')) return suggestions.slice(0, 5);
+  const co2 = carbonAnalysis.co2Tons != null ? ` (modeled CO₂ score ${Math.round(carbonAnalysis.co2Tons)})` : '';
+  const extra = {
+    id: 'carbon-mitigation-required',
+    type: 'carbon',
+    severity: 'red',
+    icon: '♻️',
+    message: `High net CO₂${co2}: reduce heavy industry and high-traffic road cells where possible; add forest and park buffers as carbon sinks; favor mixed-use and shorter travel paths. Target industrial clusters first, then widen green corridors for lasting emission cuts.`,
+  };
+  return [extra, ...suggestions].slice(0, 5);
 }
 
 async function fetchGroqSuggestions(promptText, apiKey) {
@@ -245,21 +284,33 @@ export async function getAISuggestions(grid, metrics, airflowData, carbonContext
     }
   }
 
+  const co2Tons = Number(carbonContext?.CO2_tons ?? 0);
+  const industryCells = gridSummary.industry ?? 0;
+  const carbonAnalysis = {
+    isHighNetCo2:
+      co2Tons >= AI_HIGH_CO2_TONS || industryCells >= AI_HIGH_INDUSTRY_CELLS,
+    co2Tons,
+    carbonCredits: Number(carbonContext?.carbonCredits ?? 0),
+    industryCells,
+  };
+
   const cityContext = {
     metrics: metrics,
     zoningSummary: gridSummary,
     carbon: carbonContext || { CO2_tons: 0, carbonCredits: 0 },
+    carbonAnalysis,
   };
   const promptText = buildPromptText(cityContext);
 
   if (!geminiApiKey && !groqApiKey) {
     console.warn('No LLM API keys found. Falling back to rule-based engine.');
-    return Promise.resolve(fallbackAISuggestions(grid, metrics, airflowData));
+    return Promise.resolve(fallbackAISuggestions(grid, metrics, airflowData, carbonContext));
   }
 
   try {
     if (geminiApiKey) {
-      return await fetchGeminiSuggestions(promptText, geminiApiKey);
+      const out = await fetchGeminiSuggestions(promptText, geminiApiKey);
+      return ensureCarbonSuggestionIfHigh(out, carbonAnalysis);
     }
     throw new Error('Gemini API key is missing');
   } catch (error) {
@@ -268,12 +319,13 @@ export async function getAISuggestions(grid, metrics, airflowData, carbonContext
 
   try {
     if (groqApiKey) {
-      return await fetchGroqSuggestions(promptText, groqApiKey);
+      const out = await fetchGroqSuggestions(promptText, groqApiKey);
+      return ensureCarbonSuggestionIfHigh(out, carbonAnalysis);
     }
     throw new Error('Groq API key is missing');
   } catch (error) {
     console.error('Groq API Error:', error);
     console.warn('Falling back to rule-based engine.');
-    return fallbackAISuggestions(grid, metrics, airflowData);
+    return fallbackAISuggestions(grid, metrics, airflowData, carbonContext);
   }
 }

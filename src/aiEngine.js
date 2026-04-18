@@ -1,8 +1,20 @@
-export const generateAISuggestions = (grid, metrics, airflowData) => {
+import { AI_HIGH_CO2_TONS, AI_HIGH_INDUSTRY_CELLS } from './aiConstants.js';
+
+export const generateAISuggestions = (grid, metrics, airflowData, carbonContext = null) => {
   const suggestions = [];
 
   const numCells = grid.length * grid[0].length;
   if (!metrics || numCells === 0) return suggestions;
+
+  const co2Tons = Number(carbonContext?.CO2_tons ?? 0);
+  let industryCount = 0;
+  for (let r = 0; r < grid.length; r++) {
+    for (let c = 0; c < grid[r].length; c++) {
+      if (grid[r][c].type === 'industry') industryCount += 1;
+    }
+  }
+  const highCarbon =
+    co2Tons >= AI_HIGH_CO2_TONS || industryCount >= AI_HIGH_INDUSTRY_CELLS;
 
   // If grid is empty or minimal
   if (metrics.buildingCount === 0 && metrics.greenPercent === 0) {
@@ -14,6 +26,19 @@ export const generateAISuggestions = (grid, metrics, airflowData) => {
       severity: 'green'
     });
     return suggestions;
+  }
+
+  // High CO₂ — mitigation first (rule-based)
+  if (highCarbon) {
+    const co2Label =
+      co2Tons > 0 ? ` Modeled CO₂ score ~${Math.round(co2Tons)}.` : '';
+    suggestions.push({
+      id: 'carbon-high-mitigation',
+      type: 'carbon',
+      icon: '♻️',
+      severity: 'red',
+      message: `High net CO₂.${co2Label} Solution: replace some industrial cells with parks, forests, or water buffers; reduce dense road grids where possible; add mixed housing/park ribbons to cut travel-related emissions. Set a greener baseline, then compare Before/After.`,
+    });
   }
 
   // 1. Heat Analysis
@@ -113,10 +138,16 @@ export const generateAISuggestions = (grid, metrics, airflowData) => {
     }
   }
 
-  // Sort by severity (red = highest priority)
+  // Sort by severity (red first); tie-break: carbon suggestions before others
   const priority = { 'red': 1, 'yellow': 2, 'green': 3 };
-  suggestions.sort((a, b) => priority[a.severity] - priority[b.severity]);
+  suggestions.sort((a, b) => {
+    const pa = priority[a.severity] ?? 9;
+    const pb = priority[b.severity] ?? 9;
+    if (pa !== pb) return pa - pb;
+    if (a.type === 'carbon' && b.type !== 'carbon') return -1;
+    if (b.type === 'carbon' && a.type !== 'carbon') return 1;
+    return 0;
+  });
 
-  // Limit to 4 max
-  return suggestions.slice(0, 4);
+  return suggestions.slice(0, 5);
 };
