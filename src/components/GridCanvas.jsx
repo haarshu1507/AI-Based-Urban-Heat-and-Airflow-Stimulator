@@ -176,7 +176,7 @@ const GridCanvas = ({
 
               innerContent = (
                 <div className={`w-full h-full flex items-center justify-center select-none ${fontSize} ${extraAnim}`}>
-                  {flowStr > 0 ? arrow : (isAirflow ? '❌' : '')}
+                  {flowStr > 0 ? arrow : ''}
                 </div>
               );
             }
@@ -185,17 +185,19 @@ const GridCanvas = ({
               if (!cellStyle.backgroundColor) {
                 cellStyle = { ...cellStyle, backgroundColor: '#000000' };
               }
-              innerContent = (
-                <div className="flex items-center justify-center select-none pointer-events-none w-full h-full">
-                  <Square
-                    size={vectorIconPx + 4} // increase by 3–6px as needed
-                    strokeWidth={2.4}
-                    fill="currentColor"
-                    className="text-[#9CA3AF] opacity-70 drop-shadow-[0_1px_2px_rgba(0,0,0,0.95)]"
-                    aria-hidden
-                  />
-                </div>
-              );
+              if (!isHeatmap && !isAirflow) {
+                innerContent = (
+                  <div className="flex items-center justify-center select-none pointer-events-none w-full h-full">
+                    <Square
+                      size={vectorIconPx + 4} // increase by 3–6px as needed
+                      strokeWidth={2.4}
+                      fill="currentColor"
+                      className="text-[#9CA3AF] opacity-70 drop-shadow-[0_1px_2px_rgba(0,0,0,0.95)]"
+                      aria-hidden
+                    />
+                  </div>
+                );
+              }
             }
 
             return (

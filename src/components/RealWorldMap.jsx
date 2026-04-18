@@ -9,7 +9,7 @@ import {
 } from '../osm/overpass.js';
 import { rasterizeToGrid } from '../osm/rasterize.js';
 
-const EMPTY_MAP_CROSS_HTML = `<div style="display:flex;align-items:center;justify-content:center;width:26px;height:26px;pointer-events:none"><svg viewBox="0 0 24 24" width="22" height="22" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><line x1="4" y1="4" x2="20" y2="20" stroke="#dc2626" stroke-width="3" stroke-linecap="round"/><line x1="20" y1="4" x2="4" y2="20" stroke="#dc2626" stroke-width="3" stroke-linecap="round"/></svg></div>`;
+const EMPTY_MAP_CROSS_HTML = `<div style="display:flex;align-items:center;justify-content:center;width:26px;height:26px;pointer-events:none"><svg viewBox="0 0 24 24" width="22" height="22" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2" fill="#9CA3AF" stroke="#9CA3AF" stroke-width="2.4" style="opacity:0.7" /></svg></div>`;
 
 const TYPE_ICONS = {
   empty: null,
@@ -257,18 +257,7 @@ export default function RealWorldMap({
           }).addTo(lg);
         }
 
-        if (t === 'empty' && (isHeatmapViz || isAirflowViz)) {
-          const center = cellCenter(geoBbox, y, x, rows, cols);
-          L.marker(center, {
-            icon: L.divIcon({
-              className: 'uhi-2d-marker',
-              html: EMPTY_MAP_CROSS_HTML,
-              iconSize: [26, 26],
-              iconAnchor: [13, 13],
-            }),
-            interactive: false,
-          }).addTo(lg);
-        }
+
       }
     }
   }, [
