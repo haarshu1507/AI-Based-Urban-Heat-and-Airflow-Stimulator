@@ -1,5 +1,6 @@
 import { AI_HIGH_CO2_TONS, AI_HIGH_INDUSTRY_CELLS } from './aiConstants.js';
 
+
 export const generateAISuggestions = (grid, metrics, airflowData, carbonContext = null) => {
   const suggestions = [];
 
